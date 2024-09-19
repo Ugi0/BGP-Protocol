@@ -1,6 +1,27 @@
 package main.data;
 
 public class Open extends Message {
+
+    /*
+     * 0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+       +-+-+-+-+-+-+-+-+
+       |    Version    |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |     My Autonomous System      |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |           Hold Time           |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                         BGP Identifier                        |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       | Opt Parm Len  |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                                                               |
+       |             Optional Parameters (variable)                    |
+       |                                                               |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+     */
+
     private int version;
     private int AS;
     private int holdTime;
@@ -13,9 +34,9 @@ public class Open extends Message {
         
         int i = HEADER_SIZE;
         version = message[i];
-        AS = ((message[i+1] & 0xFF << 8) | (message[i+2] & 0xFF));
-        holdTime = ((message[i+3] & 0xFF << 8) | (message[i+4] & 0xFF));
-        identifier = ((message[i+5] & 0xFF << 24) | (message[i+6] & 0xFF << 16) | (message[i+7] & 0xFF << 8) | (message[i+8] & 0xFF));
+        AS = getValue(i+1, 2);
+        holdTime = getValue(i+3, 2);
+        identifier = getValue(i+5, 4);
         OptParamLen = message[i+9];
         //TODO Handle optional parameters. How does Param. type identify the type??
     }
