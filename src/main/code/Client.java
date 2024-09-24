@@ -1,4 +1,5 @@
 // A simple Client Server Protocol .. Client for Echo Server
+package main.code;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,6 +8,8 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+
+import static main.Main.*;
 
 public class Client {
 
@@ -29,11 +32,11 @@ public static void main(String args[]) throws IOException{
     }
     catch (IOException e){
         e.printStackTrace();
-        System.err.print("IO Exception");
+        printDebug("IO Exception");
     }
 
-    System.out.println("Client Address : "+address);
-    System.out.println("Enter Data to echo Server ( Enter QUIT to end):");
+    printDebug("Client Address : "+address);
+    printDebug("Enter Data to echo Server ( Enter QUIT to end):");
 
     String response=null;
     try{
@@ -44,10 +47,10 @@ public static void main(String args[]) throws IOException{
                 try{
                 response=is.readLine();
                 if (response != null){
-                System.out.println("Server Response : "+response);
+                    printDebug("Server Response : "+response);
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println("no message from server Timeout");
+                printDebug("no message from server Timeout");
             }
                 line=br.readLine();
                 if (line.compareTo("QUIT")==0){
@@ -60,12 +63,11 @@ public static void main(String args[]) throws IOException{
     }
     catch(IOException e){
         e.printStackTrace();
-    System.out.println("Socket read Error");
+        printDebug("Socket read Error");
     }
     finally{
-
         is.close();os.close();br.close();s1.close();
-                System.out.println("Connection Closed");
+        printDebug("Connection Closed");
 
     }
 

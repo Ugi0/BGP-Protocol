@@ -1,3 +1,5 @@
+package main;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -7,7 +9,10 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
+import main.code.Router;
+
 public class Main {
+    public static boolean debug = true;
     public static void main(String[] args) {
         BufferedReader reader;
         int routerCount = 0;
@@ -18,8 +23,8 @@ public class Main {
         List<Router> routers = new ArrayList<>();
 
 		try {
-			reader = new BufferedReader(new FileReader(".config"));
-			String line = reader.readLine();
+			reader = new BufferedReader(new FileReader("src/main/.config"));
+			String line = reader.readLine();                                               
 			while (line != null) {
                 if (line.isEmpty()) {
                     line = reader.readLine();
@@ -40,8 +45,9 @@ public class Main {
                 
                     default:
                         if (portConnectionsMarker) {
+                            final int firstPort = portRangeStart;
                             if (temp.length != 1) {
-                                portConnections.put(Integer.parseInt(temp[0]), Stream.of(temp[1].split(",")).map(e -> Integer.parseInt(e.strip())).toArray(Integer[]::new));
+                                portConnections.put(Integer.parseInt(temp[0]), Stream.of(temp[1].split(",")).map(e -> firstPort + Integer.parseInt(e.strip())).toArray(Integer[]::new));
                             } else {
                                 portConnections.put(Integer.parseInt(temp[0]), new Integer[0]);
                             }
@@ -54,7 +60,7 @@ public class Main {
 
             for (int i = 0; i < routerCount; i++) {
                 routers.add(new Router(portRangeStart+i)); //Assume port is free
-                routers.get(i).setConnections(portConnections.get(i));
+                routers.get(i).setConnections(portConnections.get(i) == null ? new Integer[0] : portConnections.get(i));
             }
             for (Router router : routers) {
                 router.start();
@@ -77,5 +83,11 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    }
+
+    public static void printDebug(String message) {
+        if (debug) {
+            System.out.println(message);
+        }
     }
 }
