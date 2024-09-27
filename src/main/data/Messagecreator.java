@@ -1,6 +1,14 @@
 package main.data;
 
 public class Messagecreator {
+
+    //Message types
+    private static final int TYPE_OPEN = 1;
+    private static final int TYPE_UPDATE = 2;
+    private static final int TYPE_NOTIFICATION = 3;
+    private static final int TYPE_KEEPALIVE = 4;
+    private static final int TYPE_ROUTEREFRESH = 5;
+
     // for header
     private static final int HEADER_SIZE = 19;
     private static final int HEADER_MARKER_SIZE = 16;
