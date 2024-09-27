@@ -20,10 +20,10 @@ public class Messagecreator {
     private static final int DEFAULT_BGP_VERSION = 4;
     private static final int VERSION_START = 0;
     private static final int MYAS_START = 1;
-    private static final int HOLD_TIME_START = 5;
-    private static final int BGP_IDENTIFIER_START = 7;
-    private static final int OPT_PARAM_LEN_START = 11;
-    private static final int OPT_PARAM_START = 12;
+    private static final int HOLD_TIME_START = 3;
+    private static final int BGP_IDENTIFIER_START = 5;
+    private static final int OPT_PARAM_LEN_START = 9;
+    private static final int OPT_PARAM_START = 10;
 
 
     public int[] createHeader (int length, int type){
