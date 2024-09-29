@@ -18,7 +18,7 @@ public class Messagecreator {
     private static final int OPT_PARAM_START = 12;
 
 
-    public int[] createHeader (int length, int type){
+    public static int[] createHeader (int length, int type){
         
         if (length > MAX_MESSAGE_LENGTH || length < 0) {
             throw new Error("invalid message length");
@@ -43,7 +43,7 @@ public class Messagecreator {
     };
 
     //TODO does not add header to the message yet.
-    public int[] createOpen(int version, int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
+    public static int[] createOpen(int version, int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
         //TODO: is optional param length length in bits, octets or how?, for now assuming octets
         
         int[] openMessage = new int[OPEN_MESSAGE_SIZE_NO_PARM + optParamLen];
@@ -69,25 +69,25 @@ public class Messagecreator {
         return openMessage;
     };
 
-    public int[] createUpdate(){
+    public static int[] createUpdate(){
         //TODO
         int[] updateMessage = new int[0];
         return updateMessage;
     };
 
-    public int[] createNotification(){
+    public static int[] createNotification(){
         //TODO
         int[] NotificationMessage = new int[0];
         return NotificationMessage;
     };
 
-    public int[] createKeepalive(){
+    public static int[] createKeepalive(){
         //TODO
         int[] keepaliveMessage = new int[0];
         return keepaliveMessage;
     };
 
-    public int[] createRouteRefresh(){
+    public static int[] createRouteRefresh(){
         //TODO
         int[] routeRefreshMessage = new int[0];
         return routeRefreshMessage;

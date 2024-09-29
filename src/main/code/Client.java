@@ -1,75 +1,96 @@
 // A simple Client Server Protocol .. Client for Echo Server
 package main.code;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
+
+import main.code.threads.KeepAliveThread;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import static main.Main.*;
 
-public class Client {
+public class Client extends Thread {
+    private int port;
+    Socket socket = null;
+    InputStream inputStream = null;
+    OutputStream outputStream = null;
+    KeepAliveThread keepAliveThread;
 
-public static void main(String args[]) throws IOException{
-
-
-    InetAddress address=InetAddress.getLocalHost();
-    Socket s1=null;
-    String line=null;
-    BufferedReader br=null;
-    BufferedReader is=null;
-    PrintWriter os=null;
-
-    try {
-        s1=new Socket(address, 4445); // You can use static final constant PORT_NUM
-        s1.setSoTimeout(1000);
-        br= new BufferedReader(new InputStreamReader(System.in));
-        is=new BufferedReader(new InputStreamReader(s1.getInputStream()));
-        os= new PrintWriter(s1.getOutputStream());
-    }
-    catch (IOException e){
-        e.printStackTrace();
-        printDebug("IO Exception");
+    public Client(int port) {
+        this.port = port;
     }
 
-    printDebug("Client Address : "+address);
-    printDebug("Enter Data to echo Server ( Enter QUIT to end):");
+    public void run() {
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-    String response=null;
-    try{
-        line=br.readLine(); 
-        while(true){
-                os.println(line);
-                os.flush();
-                try{
-                response=is.readLine();
-                if (response != null){
-                    printDebug("Server Response : "+response);
-                }
-            } catch (SocketTimeoutException e) {
-                printDebug("no message from server Timeout");
+        try {
+            printDebug(String.format("Attempting to connect to port %s", port));
+            socket = new Socket("localhost", port); // You can use static final constant PORT_NUM
+            printDebug(String.format("Client connected to port %s", port));
+            socket.setKeepAlive(false);
+            inputStream = socket.getInputStream();
+            outputStream = socket.getOutputStream();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+            if (e.getLocalizedMessage().equals("Connection refused: connect")) {
+                printDebug("Port not yet open");
+                return;
             }
-                line=br.readLine();
-                if (line.compareTo("QUIT")==0){
-                    break;
+            e.printStackTrace();
+            printDebug("IO Exception");
+            return;
+        }
+
+        //Start a timer thread that will send a keepalive message every 20 seconds
+        keepAliveThread = new KeepAliveThread(outputStream, (byte) 2);
+
+        //Listen to messages from the server, should only be keep alive messages
+        byte[] buff = new byte[200]; //200 bytes for keepalive message, change this value when it's known how many bytes an keepalive message should be
+        String message = "";
+        int i = 0;
+        try {
+            while (true) {
+                inputStream.read(buff);
+                while (buff[i] != 0x0) {
+                    message += buff[i];
+                    i++;
                 }
+                printDebug(String.format("Client read %s in the stream", message));
+                message = "";
+                i = 0;
             }
+        }
+        catch(IOException e){
+            e.printStackTrace();
+            printDebug("Socket read Error");
+        }
+        finally{
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            printDebug("Connection Closed");
 
-
+        }
 
     }
-    catch(IOException e){
-        e.printStackTrace();
-        printDebug("Socket read Error");
-    }
-    finally{
-        is.close();os.close();br.close();s1.close();
-        printDebug("Connection Closed");
 
+    @Override
+    public void interrupt() {
+        keepAliveThread.kill();
     }
-
-}
 }
