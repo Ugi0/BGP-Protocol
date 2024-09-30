@@ -1,26 +1,42 @@
 package main.data;
-
+//TODO: all variables are not necessarily int, but maybe string as well? in that case make the changes accordingly
 public class Messagecreator {
+
+    //Message types
+    private static final int TYPE_OPEN = 1;
+    private static final int TYPE_UPDATE = 2;
+    private static final int TYPE_NOTIFICATION = 3;
+    private static final int TYPE_KEEPALIVE = 4;
+    private static final int TYPE_ROUTEREFRESH = 5;
+
     // for header
     private static final int HEADER_SIZE = 19;
     private static final int HEADER_MARKER_SIZE = 16;
     private static final int HEADER_LENGTH_SIZE = 2;
-    private static final int MAX_MESSAGE_LENGTH = 65535;
+    private static final int MAX_MESSAGE_LENGTH = 4096;
+    private static final int MIN_MESSAGE_LENGTH = 19;
 
     //For open message
     private static final int OPEN_MESSAGE_SIZE_NO_PARM = 10; 
     private static final int DEFAULT_BGP_VERSION = 4;
     private static final int VERSION_START = 0;
     private static final int MYAS_START = 1;
-    private static final int HOLD_TIME_START = 5;
-    private static final int BGP_IDENTIFIER_START = 7;
-    private static final int OPT_PARAM_LEN_START = 11;
-    private static final int OPT_PARAM_START = 12;
+    private static final int HOLD_TIME_START = 3;
+    private static final int BGP_IDENTIFIER_START = 5;
+    private static final int OPT_PARAM_LEN_START = 9;
+    private static final int OPT_PARAM_START = 10;
+
+    //For update message
+    private static final int WITHDRAWN_ROUTES_LENGTH_SIZE = 2;
+    //Withdrawn_routes = variable
+    private static final int PATH_ATTRIBUTE_LENGTH_SIZE = 2;
+    //Path_attributes = variable
+    //Network_layer_reachability_information(NLRI) = variable
 
 
     public static int[] createHeader (int length, int type){
         
-        if (length > MAX_MESSAGE_LENGTH || length < 0) {
+        if (length > MAX_MESSAGE_LENGTH || length < MIN_MESSAGE_LENGTH) {
             throw new Error("invalid message length");
         }
         if (type > 5 || type < 1) {
@@ -42,7 +58,6 @@ public class Messagecreator {
         return header;
     };
 
-    //TODO does not add header to the message yet.
     public static int[] createOpen(int version, int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
         //TODO: is optional param length length in bits, octets or how?, for now assuming octets
         
@@ -60,13 +75,15 @@ public class Messagecreator {
         for (int i = OPT_PARAM_LEN_START; i < OPT_PARAM_START; i++) {
             openMessage[i] = (optParamLen >> (8 * (OPT_PARAM_START-OPT_PARAM_LEN_START - 1 - i))) & 0xFF;
         }
-        //TODO? do we need optional parameters?
-        if (optParamLen >0) {
+        //TODO? do we need optional parameters? Also, should this be big-endian?
+        if (optParamLen > 0) {
             for (int i = OPT_PARAM_START; i < OPT_PARAM_START + optParamLen; i++) {
                 openMessage[i] = (optParam >> (8 * (optParamLen - 1 - i))) & 0xFF;
             }
         } 
-        return openMessage;
+
+        int[] openMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+openMessage.length,TYPE_OPEN),openMessage);
+        return openMessageWithHeader;
     };
 
     public static int[] createUpdate(){
@@ -75,15 +92,24 @@ public class Messagecreator {
         return updateMessage;
     };
 
-    public static int[] createNotification(){
-        //TODO
-        int[] NotificationMessage = new int[0];
-        return NotificationMessage;
+    public static int[] createNotification(int error, int errorSub, int data){ //TODO specify errors somewhere
+        int significantBits = 32 - Integer.numberOfLeadingZeros(data);
+        int dataOctets = (significantBits + 7) / 8;
+        int[] notificationMessage = new int[2 + dataOctets];
+        notificationMessage[0] = error;
+        notificationMessage[1] = errorSub;
+        if (data != 0){
+            for (int i = 2; i < 2 + dataOctets; i++) {
+                notificationMessage[i] = (data >> (8 * (dataOctets - 1 - i))) & 0xFF;
+            }
+        }
+
+        int[] notificationMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+notificationMessage.length,TYPE_NOTIFICATION),notificationMessage);
+        return notificationMessageWithHeader;
     };
 
     public static int[] createKeepalive(){
-        //TODO
-        int[] keepaliveMessage = new int[0];
+        int[] keepaliveMessage = createHeader(0,TYPE_KEEPALIVE);
         return keepaliveMessage;
     };
 
@@ -93,7 +119,13 @@ public class Messagecreator {
         return routeRefreshMessage;
     };
 
+    private int[] combineArrays(int[] array1, int[] array2) {
+        // CHAT-GPT code:
+        int[] result = new int[array1.length + array2.length];
+        System.arraycopy(array1, 0, result, 0, array1.length);
+        System.arraycopy(array2, 0, result, array1.length, array2.length);
 
-
+        return result;
+    }
 
 }
