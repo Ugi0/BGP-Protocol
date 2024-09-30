@@ -82,7 +82,7 @@ public class Messagecreator {
             }
         } 
 
-        openMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+openMessage.length,TYPE_OPEN),openMessage);
+        int[] openMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+openMessage.length,TYPE_OPEN),openMessage);
         return openMessageWithHeader;
     };
 
@@ -98,13 +98,13 @@ public class Messagecreator {
         int[] notificationMessage = new int[2 + dataOctets];
         notificationMessage[0] = error;
         notificationMessage[1] = errorSub;
-        if (data){
+        if (data != 0){
             for (int i = 2; i < 2 + dataOctets; i++) {
-                openMessage[i] = (data >> (8 * (dataOctets - 1 - i))) & 0xFF;
+                notificationMessage[i] = (data >> (8 * (dataOctets - 1 - i))) & 0xFF;
             }
         }
 
-        notificationMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+notificationMessage.length,TYPE_NOTIFICATION),notificationMessage);
+        int[] notificationMessageWithHeader = combineArrays(createHeader(HEADER_SIZE+notificationMessage.length,TYPE_NOTIFICATION),notificationMessage);
         return notificationMessageWithHeader;
     };
 
