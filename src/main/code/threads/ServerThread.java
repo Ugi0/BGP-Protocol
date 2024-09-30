@@ -1,18 +1,17 @@
 package main.code.threads;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import static main.Main.*;
 
 public class ServerThread extends Thread {  
-    String line = null;
-    BufferedReader bufferedReader = null;
-    PrintWriter printWriter = null;
+    InputStream inputStream = null;
+    OutputStream outputStream = null;
     Socket socket=null;
+    KeepAliveThread keepAliveThread;
 
     public ServerThread(Socket s) {
         socket = s;
@@ -25,42 +24,47 @@ public class ServerThread extends Thread {
 
     public void run() {
         try {
-            bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            printWriter = new PrintWriter(socket.getOutputStream());
+            inputStream = socket.getInputStream();
+            outputStream = socket.getOutputStream();
 
         } catch(IOException e){
             printDebug("IO error in server thread");
         }
 
-        try {
-            line= bufferedReader.readLine();
-            while (line.compareTo("QUIT") != 0){
-                printWriter.println(line);
-                printWriter.flush();
-                printDebug("Response to Client  :  "+line);
-                printDebug("client port: " + socket.getPort());
-                line= bufferedReader.readLine();
-            }   
-        } catch (IOException e) {
+        //Start a timer thread that will send a keepalive message every 20 seconds
+        keepAliveThread = new KeepAliveThread(outputStream, (byte) 1);
 
-            line = getName(); //reused String line for getting thread name
-            printDebug("IO Error/ Client "+line+" terminated abruptly");
+        byte[] buff = new byte[2000];
+        String message = "";
+        int i = 0;
+        try {
+            while (true) {
+                inputStream.read(buff);
+                while (buff[i] != 0x0) {
+                    message += buff[i];
+                    i++;
+                }
+                printDebug(String.format("Server read %s in the stream", message));
+                message = "";
+                i = 0;
+            }
+        } catch (IOException e) {
+            printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));
         } catch(NullPointerException e){
-            line = getName(); //reused String line for getting thread name
-            printDebug("Client "+line+" Closed");
+            printDebug(String.format("Client %s Closed", getName()));
         }
 
 
         finally {    
             try {
                 printDebug("Connection Closing..");
-                if (bufferedReader != null){
-                    bufferedReader.close(); 
+                if (inputStream != null){
+                    inputStream.close(); 
                     printDebug(" Socket Input Stream Closed");
                 }
 
-                if (printWriter != null){
-                    printWriter.close();
+                if (outputStream != null){
+                    outputStream.close();
                     printDebug("Socket Out Closed");
                 }
                 if (socket!=null){
@@ -73,5 +77,10 @@ public class ServerThread extends Thread {
                 printDebug("Socket Close Error");
             }
         }//end finally
+    }
+
+    @Override
+    public void interrupt() {
+        keepAliveThread.kill();
     }
 }

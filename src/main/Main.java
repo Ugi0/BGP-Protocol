@@ -26,7 +26,7 @@ public class Main {
 			reader = new BufferedReader(new FileReader("src/main/.config"));
 			String line = reader.readLine();                                               
 			while (line != null) {
-                if (line.isEmpty()) {
+                if (line.isEmpty() || line.startsWith("#")) {
                     line = reader.readLine();
                     continue;
                 }
@@ -47,7 +47,7 @@ public class Main {
                         if (portConnectionsMarker) {
                             final int firstPort = portRangeStart;
                             if (temp.length != 1) {
-                                portConnections.put(Integer.parseInt(temp[0]), Stream.of(temp[1].split(",")).map(e -> firstPort + Integer.parseInt(e.strip())).toArray(Integer[]::new));
+                                portConnections.put(Integer.parseInt(temp[0]), Stream.of(temp[1].split(",")).map(e -> firstPort - 1 + Integer.parseInt(e.strip())).toArray(Integer[]::new));
                             } else {
                                 portConnections.put(Integer.parseInt(temp[0]), new Integer[0]);
                             }
@@ -59,11 +59,7 @@ public class Main {
 			reader.close();
 
             for (int i = 0; i < routerCount; i++) {
-                routers.add(new Router(portRangeStart+i)); //Assume port is free
-                routers.get(i).setConnections(portConnections.get(i) == null ? new Integer[0] : portConnections.get(i));
-            }
-            for (Router router : routers) {
-                router.start();
+                routers.add(new Router(portRangeStart+i, portConnections.get(i) == null ? new Integer[0] : portConnections.get(i))); //Assume port is free
             }
 
             Scanner scanner = new Scanner(System.in);
@@ -77,7 +73,7 @@ public class Main {
                 scanner.close();
                 System.out.println("Stopping threads");
                 for (Router router : routers) {
-                    router.interrupt();
+                    router.kill();
                 }
             }
 		} catch (IOException e) {

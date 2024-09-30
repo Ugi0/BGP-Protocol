@@ -34,7 +34,7 @@ public class Messagecreator {
     //Network_layer_reachability_information(NLRI) = variable
 
 
-    private int[] createHeader (int length, int type){
+    public static int[] createHeader (int length, int type){
         
         if (length > MAX_MESSAGE_LENGTH || length < MIN_MESSAGE_LENGTH) {
             throw new Error("invalid message length");
@@ -58,7 +58,7 @@ public class Messagecreator {
         return header;
     };
 
-    public int[] createOpen(int version, int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
+    public static int[] createOpen(int version, int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
         //TODO: is optional param length length in bits, octets or how?, for now assuming octets
         
         int[] openMessage = new int[OPEN_MESSAGE_SIZE_NO_PARM + optParamLen];
@@ -86,13 +86,13 @@ public class Messagecreator {
         return openMessageWithHeader;
     };
 
-    public int[] createUpdate(){
+    public static int[] createUpdate(){
         //TODO
         int[] updateMessage = new int[0];
         return updateMessage;
     };
 
-    public int[] createNotification(int error, int errorSub, int data){ //TODO specify errors somewhere
+    public static int[] createNotification(int error, int errorSub, int data){ //TODO specify errors somewhere
         int significantBits = 32 - Integer.numberOfLeadingZeros(data);
         int dataOctets = (significantBits + 7) / 8;
         int[] notificationMessage = new int[2 + dataOctets];
@@ -108,12 +108,12 @@ public class Messagecreator {
         return notificationMessageWithHeader;
     };
 
-    public int[] createKeepalive(){
+    public static int[] createKeepalive(){
         int[] keepaliveMessage = createHeader(0,TYPE_KEEPALIVE);
         return keepaliveMessage;
     };
 
-    public int[] createRouteRefresh(){
+    public static int[] createRouteRefresh(){
         //TODO
         int[] routeRefreshMessage = new int[0];
         return routeRefreshMessage;
