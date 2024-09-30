@@ -119,7 +119,7 @@ public class Messagecreator {
         return routeRefreshMessage;
     };
 
-    private int[] combineArrays(int[] array1, int[] array2) {
+    private static int[] combineArrays(int[] array1, int[] array2) {
         // CHAT-GPT code:
         int[] result = new int[array1.length + array2.length];
         System.arraycopy(array1, 0, result, 0, array1.length);
