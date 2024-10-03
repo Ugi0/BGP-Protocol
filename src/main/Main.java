@@ -13,10 +13,10 @@ import main.code.Router;
 
 public class Main {
     public static boolean debug = true;
+    private static int portRangeStart = 0;
     public static void main(String[] args) {
         BufferedReader reader;
         int routerCount = 0;
-        int portRangeStart = 0;
         HashMap<Integer, Integer[]> portConnections = new HashMap<>();
         boolean portConnectionsMarker = false;
 
@@ -45,9 +45,8 @@ public class Main {
                 
                     default:
                         if (portConnectionsMarker) {
-                            final int firstPort = portRangeStart;
                             if (temp.length != 1) {
-                                portConnections.put(Integer.parseInt(temp[0]), Stream.of(temp[1].split(",")).map(e -> firstPort - 1 + Integer.parseInt(e.strip())).toArray(Integer[]::new));
+                                portConnections.put(Integer.parseInt(temp[0]), parseInt(temp[1]));
                             } else {
                                 portConnections.put(Integer.parseInt(temp[0]), new Integer[0]);
                             }
@@ -65,7 +64,7 @@ public class Main {
             Scanner scanner = new Scanner(System.in);
             try {
                 while (true) {
-                    System.out.println("Command: ");
+                    //System.out.println("Command: ");
                     String command = scanner.nextLine();
                     //TODO handle commands somehow here
                 }
@@ -79,6 +78,13 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    }
+
+    private static Integer[] parseInt(String value) {
+        if (value.strip().equals("")) {
+            return new Integer[0];
+        }
+        return Stream.of(value.split(",")).map(e -> portRangeStart - 1 + Integer.parseInt(e.strip())).toArray(Integer[]::new);
     }
 
     public static void printDebug(String message) {
