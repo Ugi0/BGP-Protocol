@@ -1,7 +1,9 @@
-package main.data
+package routing;
+
+import java.util.HashMap;
 
 public class RoutingTable{
-	private HashMap<int, int> addresses; //destinationAddress as key and nextHop as value
+	private HashMap<Integer, Integer> addresses; //destinationAddress as key and nextHop as value
 	
 	//Is it enough to have just these two in routing table, or add other attributes here
 	//RoutingTable class should be used when actually sending the packet
@@ -10,7 +12,7 @@ public class RoutingTable{
 	public RoutingTable(RoutingInformationBase base){
 		addresses = new HashMap<>();
 		for (int i = 0; i < base.LocRIB.size(); i++) {
-			addresses.put(base.LocRIB[i].destinationAddress, base.LocRIB[i].nextHop);
+			addresses.put(base.LocRIB.get(i).destinationAddress, base.LocRIB.get(i).nextHop);
 		}
 	}
 	

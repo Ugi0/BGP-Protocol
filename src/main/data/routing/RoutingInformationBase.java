@@ -1,10 +1,11 @@
-package main.data
+package routing;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RoutingInformationBase{
-	ArrayList<Route> AdjRIBsIn; //All routes received with OPEN or UPDATE messages
-	ArrayList<Route> LocRIB; //Only best routes (shortest AS_PATH) filtered from AdjRIBsIn
-	ArrayList<Route> AdjRIBsOut; //Routes which are advertised to neighbourgs
+	List<Route> AdjRIBsIn; //All routes received with OPEN or UPDATE messages
+	List<Route> LocRIB; //Only best routes (shortest AS_PATH) filtered from AdjRIBsIn
+	List<Route> AdjRIBsOut; //Routes which are advertised to neighbourgs
 	
 	public RoutingInformationBase() {
 		AdjRIBsIn = new ArrayList<Route>();
@@ -27,7 +28,7 @@ public class RoutingInformationBase{
 		if (type == 0) {
 			removeRoute(route);
 		}
-		elif (type == 1){
+		else if (type == 1){
 			filter(route); //Filtering first so the new route is not compared with itself
 			addRoute(route);
 		}
@@ -37,17 +38,18 @@ public class RoutingInformationBase{
 		//decision process if the route should be added to LocRIB and AdjRIBsOut or only to AdjRIBsIn
 		//comparing AS_PATH length with every route in AdjRIBsIn with same destination
 		//If new route is better than already existing one, need to remove the old one and add new one
-		Route bestRoute;
+		Route bestRoute = null;
 		ArrayList<Route> oldRoutes = new ArrayList<Route>();;
 		int sameDestinations = 0;
 		for (int i = 0; i < AdjRIBsIn.size(); i++) {
-			if (AdjRIBsIn[i].destinationAddress.equals(route.destinationAddress)) {
+			if (AdjRIBsIn.get(i).destinationAddress == route.destinationAddress) {
 				sameDestinations =+ 1;
-				if (AdjRIBsIn[i].AS_PATH.length > route.AS_PATH.length)
+				if (AdjRIBsIn.get(i).AS_PATH.length > route.AS_PATH.length) {
 					bestRoute = route;
-					oldRoutes.add(AdjRIBsIn[i]);
-				else
-					bestRoute = AdjRIBsIn[i];
+					oldRoutes.add(AdjRIBsIn.get(i));
+				} else {
+					bestRoute = AdjRIBsIn.get(i);
+				}
 			}
 		}
 		if (sameDestinations == 0) {
@@ -55,8 +57,8 @@ public class RoutingInformationBase{
 			AdjRIBsOut.add(route);
 		}
 		else if (bestRoute.equals(route)) {
-			for (int j = 0; j < oldRoutes.size(); i++) {
-				removeRoute(oldRoutes[i]);
+			for (int j = 0; j < oldRoutes.size(); j++) {
+				removeRoute(oldRoutes.get(j));
 			}
 			LocRIB.add(route);
 			AdjRIBsOut.add(route);

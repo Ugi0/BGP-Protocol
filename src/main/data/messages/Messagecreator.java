@@ -1,4 +1,4 @@
-package main.data;
+package messages;
 //TODO: all variables are not necessarily int, but maybe string as well? in that case make the changes accordingly
 public class Messagecreator {
 
