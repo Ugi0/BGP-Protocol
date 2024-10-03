@@ -1,4 +1,4 @@
-package main.data;
+package messages;
 
 public class Notification extends Message {
 

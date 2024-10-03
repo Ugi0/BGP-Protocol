@@ -1,4 +1,4 @@
-package main.data;
+package messages;
 
 public class Update extends Message {
     private int withdrawnRoutLen;

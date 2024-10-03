@@ -1,4 +1,4 @@
-package main.data;
+package messages;
 
 public class Message {
     protected static final int HEADER_SIZE = 19;
