@@ -59,5 +59,11 @@ public class Notification extends Message {
         super(message);
         //TODO Auto-generated constructor stub
     }
+
+    @Override
+    byte[] contentToBytes() {
+        // TODO
+        throw new UnsupportedOperationException("Unimplemented method 'contentToBytes'");
+    }
     
 }

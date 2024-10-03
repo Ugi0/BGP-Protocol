@@ -23,22 +23,17 @@ public class Update extends Message {
 
     public Update(int[] message) {
         super(message);
-        int i = HEADER_SIZE;
-        withdrawnRoutLen = getValue(i, 2);
-        i += 2;
+        withdrawnRoutLen = getValue(2);
         int index = 0;
         for (int rounds = 0; rounds < withdrawnRoutLen; rounds++) {
-            int length = message[i];
-            i++;
-            withdrawnRoutes[index] = getValue(i, length);
+            int length = getValue(1);
+            withdrawnRoutes[index] = getValue(length);
             index++;
         }
-        totPathAttrLen = getValue(i, 2);
-        i += 2;
+        totPathAttrLen = getValue(2);
         index = 0;
         for (int rounds = 0; rounds < totPathAttrLen; rounds++) {
-            totPathAttr[index] = new PathAttribute(message[i], message[i+1]);
-            i += 2;
+            totPathAttr[index] = new PathAttribute(getValue(1), getValue(1));
         }
         //TODO Network layer reachability information
     }
@@ -50,5 +45,11 @@ public class Update extends Message {
             this.AttrFlags = AttrFlags;
             this.AttrTypeCode = AttrTypeCode;
         }
+    }
+
+    @Override
+    byte[] contentToBytes() {
+        // TODO
+        throw new UnsupportedOperationException("Unimplemented method 'contentToBytes'");
     }
 }

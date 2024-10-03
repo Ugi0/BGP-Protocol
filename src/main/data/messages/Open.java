@@ -29,16 +29,26 @@ public class Open extends Message {
     private int OptParamLen;
     private int OptParams;
 
+    public Open() {
+      super();
+      //TODO default open message parameters
+    }
+
     public Open(int[] message) {
         super(message);
         
-        int i = HEADER_SIZE;
-        version = message[i];
-        AS = getValue(i+1, 2);
-        holdTime = getValue(i+3, 2);
-        identifier = getValue(i+5, 4);
-        OptParamLen = message[i+9];
-        //TODO Handle optional parameters. How does Param. type identify the type??
+        version = getValue(1);
+        AS = getValue(2);
+        holdTime = getValue(2);
+        identifier = getValue(4); //e.g 1.1.1.1
+        OptParamLen = getValue(1); //Assume OptParam is never used, so this value is always 0
+        OptParams = getValue(OptParamLen);
     }
-    
+
+    @Override
+    byte[] contentToBytes() {
+      // TODO
+      throw new UnsupportedOperationException("Unimplemented method 'contentToBytes'");
+    }
+
 }
