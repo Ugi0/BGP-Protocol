@@ -14,6 +14,7 @@ import main.code.Router;
 public class Main {
     public static boolean debug = true;
     private static int portRangeStart = 0;
+    public static String[] addressList = {"127.0.0.1","127.0.0.2","127.0.0.3"};
     public static void main(String[] args) {
         BufferedReader reader;
         int routerCount = 0;
@@ -58,7 +59,7 @@ public class Main {
 			reader.close();
 
             for (int i = 0; i < routerCount; i++) {
-                routers.add(new Router(portRangeStart+i, portConnections.get(i) == null ? new Integer[0] : portConnections.get(i))); //Assume port is free
+                routers.add(new Router(addressList[i], addressList)); //Assume port is free
             }
 
             Scanner scanner = new Scanner(System.in);

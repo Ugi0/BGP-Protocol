@@ -1,7 +1,7 @@
-// echo server
 package main.code;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -10,19 +10,20 @@ import main.code.threads.ServerThread;
 import static main.Main.*;
 
 public class Server extends Thread {
-    private int port;
+    private String ip;
 
     Socket socket = null;
     ServerSocket serverSocket = null;
 
-    public Server(int portNum) {
-        port = portNum;
+    public Server(String ipAdd) {
+        ip=ipAdd;
     }
 
     public void run() {
         try {
-            serverSocket = new ServerSocket(port); // can also use static final PORT_NUM , when defined
-            printDebug(String.format("Router Listening on port %s", port));
+            InetAddress addr = InetAddress.getByName(ip);
+            serverSocket = new ServerSocket(8080,50,addr); // Make sure the client port is the same
+            printDebug(String.format("Router using address %s", addr));
         } catch(IOException e) {
             e.printStackTrace();
             printDebug("Server error");

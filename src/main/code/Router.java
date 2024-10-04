@@ -3,30 +3,30 @@ package main.code;
 import static main.Main.printDebug;
 
 public class Router {
-    private int serverPort;
+    private String serverAddess;
     private Server server;
-    private Integer[] connectionPorts;
+    private String[] connectionAddresses;
     private Client[] connections;
 
-    public Router(int portNum, Integer[] connectionPorts) {
-        serverPort = portNum;
-        this.connectionPorts = connectionPorts;
-        connections = new Client[connectionPorts.length];
+    public Router(String address, String[] connectionAddresses) {
+        serverAddess = address;
+        this.connectionAddresses = connectionAddresses;
+        connections = new Client[connectionAddresses.length];
 
         createServerThread();
         createClientThreads();
     }
 
     private void createServerThread() {
-        printDebug(String.format("Starting server thread on port %s", serverPort));
-        server = new Server(serverPort);
+        printDebug(String.format("Starting server thread on address %s", serverAddess));
+        server = new Server(serverAddess);
         server.start();
     }
 
     private void createClientThreads() {
         int i = 0;
-        for (Integer port : connectionPorts) {
-            connections[i] = new Client(port);
+        for (String ip : connectionAddresses) {
+            connections[i] = new Client(ip);
             i++;
         }
         for (int j = 0; j < i; j++) {

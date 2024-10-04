@@ -2,6 +2,7 @@
 package main.code;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
@@ -13,14 +14,14 @@ import java.io.OutputStream;
 import static main.Main.*;
 
 public class Client extends Thread {
-    private int port;
+    private String ipAdd;
     Socket socket = null;
     InputStream inputStream = null;
     OutputStream outputStream = null;
     KeepAliveThread keepAliveThread;
 
-    public Client(int port) {
-        this.port = port;
+    public Client(String ipAdd) {
+        this.ipAdd=ipAdd;
     }
 
     public void run() {
@@ -31,9 +32,10 @@ public class Client extends Thread {
         }
 
         try {
-            printDebug(String.format("Attempting to connect to port %s", port));
-            socket = new Socket("localhost", port); // You can use static final constant PORT_NUM
-            printDebug(String.format("Client connected to port %s", port));
+            InetAddress addr = InetAddress.getByName(ipAdd);
+            printDebug(String.format("Attempting to connect to address %s", addr));
+            socket = new Socket(addr, 8080); // Port number can be freely chosen as long as it matches the server port.
+            printDebug(String.format("Client connected to address %s", addr));
             socket.setKeepAlive(false);
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
@@ -41,7 +43,7 @@ public class Client extends Thread {
         catch (IOException e){
             e.printStackTrace();
             if (e.getLocalizedMessage().equals("Connection refused: connect")) {
-                printDebug("Port not yet open");
+                printDebug("Connection not yet open");
                 return;
             }
             e.printStackTrace();
