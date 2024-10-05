@@ -22,7 +22,7 @@ public class Server extends Thread {
     public void run() {
         try {
             InetAddress addr = InetAddress.getByName(ip);
-            serverSocket = new ServerSocket(8080,50,addr); // Make sure the client port is the same
+            serverSocket = new ServerSocket(8080,50, addr); // Make sure the client port is the same
             printDebug(String.format("Router using address %s", addr));
         } catch(IOException e) {
             e.printStackTrace();

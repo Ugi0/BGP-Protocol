@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -13,13 +14,11 @@ import main.code.Router;
 
 public class Main {
     public static boolean debug = true;
-    private static int portRangeStart = 0;
-    public static String[] addressList = {"127.0.0.1","127.0.0.2","127.0.0.3"};
     public static void main(String[] args) {
         BufferedReader reader;
         int routerCount = 0;
-        HashMap<Integer, Integer[]> portConnections = new HashMap<>();
-        boolean portConnectionsMarker = false;
+        HashMap<Integer, Integer[]> connections = new HashMap<>();
+        boolean connectionsMarker = false;
 
         List<Router> routers = new ArrayList<>();
 
@@ -36,20 +35,16 @@ public class Main {
                     case "Routers":
                         routerCount = Integer.parseInt(temp[1].strip());
                         break;
-                    
-                    case "PortRangeStart":
-                        portRangeStart = Integer.parseInt(temp[1].strip());
-                        break;
                     case "PortConnections":
-                        portConnectionsMarker = true;
+                        connectionsMarker = true;
                         break;
                 
                     default:
-                        if (portConnectionsMarker) {
+                        if (connectionsMarker) {
                             if (temp.length != 1) {
-                                portConnections.put(Integer.parseInt(temp[0]), parseInt(temp[1]));
+                                connections.put(Integer.parseInt(temp[0]), parseInt(temp[1]));
                             } else {
-                                portConnections.put(Integer.parseInt(temp[0]), new Integer[0]);
+                                connections.put(Integer.parseInt(temp[0]), new Integer[0]);
                             }
                         }
                         break;
@@ -59,7 +54,8 @@ public class Main {
 			reader.close();
 
             for (int i = 0; i < routerCount; i++) {
-                routers.add(new Router(addressList[i], addressList)); //Assume port is free
+                routers.add(new Router(String.format("127.0.%s.0", i+1), 
+                    Arrays.stream(connections.get(i+1)).map(e -> String.format("127.0.%s.0", e)).toArray(String[]::new)));
             }
 
             Scanner scanner = new Scanner(System.in);
@@ -85,7 +81,7 @@ public class Main {
         if (value.strip().equals("")) {
             return new Integer[0];
         }
-        return Stream.of(value.split(",")).map(e -> portRangeStart - 1 + Integer.parseInt(e.strip())).toArray(Integer[]::new);
+        return Stream.of(value.split(",")).map(e -> Integer.parseInt(e.strip())).toArray(Integer[]::new);
     }
 
     public static void printDebug(String message) {
