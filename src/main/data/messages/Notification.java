@@ -55,15 +55,38 @@ public class Notification extends Message {
               11 - Malformed AS_PATH.
      */
 
+    private int error;
+    private int errorSub;
+    private int data;
+    private byte[] notificationMessage;
+
     public Notification(int[] message) {
         super(message);
         //TODO Auto-generated constructor stub
     }
 
+    public Notification(int error, int errorSub, int data){ //TODO specify errors somewhere
+        this.error = error;
+        this.errorSub = errorSub;
+        this.data = data;
+        type = TYPE_NOTIFICATION;
+
+        notificationMessage = toBytes();         
+    };
+
     @Override
     byte[] contentToBytes() {
-        // TODO
-        throw new UnsupportedOperationException("Unimplemented method 'contentToBytes'");
+        int significantBits = 32 - Integer.numberOfLeadingZeros(data);
+        int dataOctets = (significantBits + 7) / 8;
+        byte[] notificationMessage = new byte[2 + dataOctets];
+        notificationMessage[0] = (byte) error;
+        notificationMessage[1] = (byte) errorSub;
+        if (data != 0){
+            for (int i = 2; i < 2 + dataOctets; i++) {
+                notificationMessage[i] = (byte) ((data >> (8 * (dataOctets - 1 - i))) & 0xFF);
+            }
+        }
+        return notificationMessage;
     }
     
 }

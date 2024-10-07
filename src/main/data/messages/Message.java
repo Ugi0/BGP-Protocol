@@ -5,6 +5,14 @@ import java.nio.ByteBuffer;
 public abstract class Message {
     protected static final int HEADER_SIZE = 19;
     private static final int HEADER_MARKER_SIZE = 16;
+    protected static final int MAX_MESSAGE_LENGTH = 1500;
+
+    //Message types
+    protected static final int TYPE_OPEN = 1;
+    protected static final int TYPE_UPDATE = 2;
+    protected static final int TYPE_NOTIFICATION = 3;
+    protected static final int TYPE_KEEPALIVE = 4;
+    protected static final int TYPE_ROUTEREFRESH = 5;
 
     private int[] message;
     protected int type;
@@ -52,8 +60,10 @@ public abstract class Message {
     }
 
     protected byte[] toBytes() {
-        byte[] headerBytes = headerToBytes();
         byte[] contentBytes = contentToBytes();
+        length = contentBytes.length + HEADER_SIZE;
+        byte[] headerBytes = headerToBytes();
+        
         byte[] combined = new byte[headerBytes.length + contentBytes.length];
         ByteBuffer buff = ByteBuffer.wrap(combined);
         buff.put(headerBytes);

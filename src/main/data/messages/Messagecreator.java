@@ -10,11 +10,11 @@ public class Messagecreator {
     private static final int TYPE_ROUTEREFRESH = 5;
 
     // for header
-    private static final int HEADER_SIZE = 19;
-    private static final int HEADER_MARKER_SIZE = 16;
-    private static final int HEADER_LENGTH_SIZE = 2;
-    private static final int MAX_MESSAGE_LENGTH = 1500;
-    private static final int MIN_MESSAGE_LENGTH = 19;
+    protected static final int HEADER_SIZE = 19;
+    protected static final int HEADER_MARKER_SIZE = 16;
+    protected static final int HEADER_LENGTH_SIZE = 2;
+    protected static final int MAX_MESSAGE_LENGTH = 1500;
+    protected static final int MIN_MESSAGE_LENGTH = 19;
 
     //For open message
     private static final int OPEN_MESSAGE_SIZE_NO_PARM = 10; 
