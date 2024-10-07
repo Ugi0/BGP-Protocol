@@ -21,7 +21,7 @@ public class Update extends Message {
       +-----------------------------------------------------+
      */
 
-    public Update(int[] message) {
+    public Update(byte[] message) {
         super(message);
         withdrawnRoutLen = getValue(2);
         int index = 0;
