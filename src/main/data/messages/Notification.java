@@ -58,9 +58,8 @@ public class Notification extends Message {
     private int error;
     private int errorSub;
     private int data;
-    private byte[] notificationMessage;
 
-    public Notification(int[] message) {
+    public Notification(byte[] message) {
         super(message);
         //TODO Auto-generated constructor stub
     }
@@ -71,7 +70,7 @@ public class Notification extends Message {
         this.data = data;
         type = TYPE_NOTIFICATION;
 
-        notificationMessage = toBytes();         
+        message = toBytes();         
     };
 
     @Override

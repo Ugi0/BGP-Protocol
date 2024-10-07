@@ -14,7 +14,7 @@ public abstract class Message {
     protected static final int TYPE_KEEPALIVE = 4;
     protected static final int TYPE_ROUTEREFRESH = 5;
 
-    private int[] message;
+    protected byte[] message;
     protected int type;
     protected int length;
     private int index;
@@ -23,7 +23,7 @@ public abstract class Message {
         //TODO default header parameters
     }
 
-    public Message(int[] message) {
+    public Message(byte[] message) {
         this.message = message;
 
         int index = 0;

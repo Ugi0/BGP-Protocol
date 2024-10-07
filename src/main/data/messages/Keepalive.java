@@ -2,16 +2,15 @@ package messages;
 
 public class Keepalive extends Message {
 
-    private byte[] keepaliveMessage;
 
-    public Keepalive(int[] message) {
+    public Keepalive(byte[] message) {
         super(message);
     }
 
     public Keepalive(){
         type = TYPE_KEEPALIVE;
 
-        keepaliveMessage = toBytes();
+        message = toBytes();
     }
 
     @Override

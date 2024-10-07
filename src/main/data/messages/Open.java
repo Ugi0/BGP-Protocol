@@ -38,7 +38,6 @@ public class Open extends Message {
     private int identifier;
     private int OptParamLen;
     private int OptParams;
-    private byte[] OpenMessage;
     
 
     public Open() {
@@ -46,7 +45,7 @@ public class Open extends Message {
       //TODO default open message parameters
     }
 
-    public Open(int[] message) {
+    public Open(byte[] message) {
         super(message);
         
         version = getValue(1);
@@ -66,7 +65,7 @@ public class Open extends Message {
       OptParams = optParam;
       type = TYPE_OPEN;
 
-      OpenMessage = toBytes(); 
+      message = toBytes(); 
     };
 
     @Override
