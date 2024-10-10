@@ -38,12 +38,6 @@ public class Open extends Message {
     private int identifier;
     private int OptParamLen;
     private int OptParams;
-    
-
-    public Open() {
-      super();
-      //TODO default open message parameters
-    }
 
     public Open(byte[] message) {
         super(message);
@@ -57,6 +51,8 @@ public class Open extends Message {
     }
 
     public Open(int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
+      super();
+
       version = DEFAULT_BGP_VERSION;
       AS = myAS;
       holdTime = holdtime;

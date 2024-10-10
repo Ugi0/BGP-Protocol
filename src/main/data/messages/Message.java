@@ -20,7 +20,6 @@ public abstract class Message {
     private int index;
 
     public Message() {
-        //TODO default header parameters
     }
 
     public Message(byte[] message) {
@@ -52,14 +51,14 @@ public abstract class Message {
         for (int i = 0; i< HEADER_MARKER_SIZE; i++) {
             bytes[i] = (byte) 255;
         }
-        bytes[17] = (byte) (length << 8);
-        bytes[18] = (byte) length;
-        bytes[19] = (byte) type;
+        bytes[16] = (byte) (length << 8);
+        bytes[17] = (byte) length;
+        bytes[18] = (byte) classToType(getClass());
 
         return bytes;
     }
 
-    protected byte[] toBytes() {
+    public byte[] toBytes() { 
         byte[] contentBytes = contentToBytes();
         length = contentBytes.length + HEADER_SIZE;
         byte[] headerBytes = headerToBytes();
@@ -73,4 +72,19 @@ public abstract class Message {
     }
 
     abstract byte[] contentToBytes();
+
+    private int classToType(Class<? extends Message> clazz) {
+        return ClassType.valueOf(clazz.getSimpleName()).num;
+    }
+
+    private enum ClassType {
+        Open(1), Update(2),
+        Notification(3), Keepalive(4),
+        RouterRefresh(5);
+
+        int num;
+        ClassType(int num) {
+            this.num = num;
+        }
+    }
 }
