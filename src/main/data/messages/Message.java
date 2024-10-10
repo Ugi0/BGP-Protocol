@@ -1,11 +1,15 @@
 package messages;
 
+import static main.Main.printDebug;
+
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 
 public abstract class Message {
-    protected static final int HEADER_SIZE = 19;
-    private static final int HEADER_MARKER_SIZE = 16;
-    protected static final int MAX_MESSAGE_LENGTH = 1500;
+    public static final int HEADER_SIZE = 19;
+    public static final int HEADER_MARKER_SIZE = 16;
+    public static final int MAX_MESSAGE_LENGTH = 1500;
 
     //Message types
     protected static final int TYPE_OPEN = 1;
@@ -25,15 +29,36 @@ public abstract class Message {
     public Message(byte[] message) {
         this.message = message;
 
-        int index = 0;
         for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
-            if (message[index] != 255) {
+            if (getValue(1) != 255) {
                 throw new Error();
             }
         }
         index = HEADER_MARKER_SIZE;
         length = getValue(2);
         type = getValue(1);
+    }
+
+    public static Class<? extends Message> classFromMessage(byte[] message) {
+        for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
+            if ((message[i] & 0xFF) != 255) {
+                throw new Error();
+            }
+        }
+        int type = message[HEADER_MARKER_SIZE+2];
+
+        switch (type) {
+            case 1:
+                return Open.class;
+            case 2:
+                return Update.class;
+            case 3:
+                return Notification.class;
+            case 4:
+                return Keepalive.class;
+            default:
+                return null;
+        }
     }
 
     protected int getValue(int octects) {
@@ -49,13 +74,19 @@ public abstract class Message {
     private byte[] headerToBytes() {
         byte[] bytes = new byte[HEADER_SIZE];
         for (int i = 0; i< HEADER_MARKER_SIZE; i++) {
-            bytes[i] = (byte) 255;
+            bytes[i] = Integer.valueOf(255).byteValue();
         }
         bytes[16] = (byte) (length << 8);
         bytes[17] = (byte) length;
         bytes[18] = (byte) classToType(getClass());
 
         return bytes;
+    }
+
+    protected void addToByteList(int value, int octets, List<Byte> bytes) {
+        for (int i = 0; i < octets; i++) {
+            bytes.add(Integer.valueOf(value >> 8 * (octets-i-1)).byteValue());
+        }
     }
 
     public byte[] toBytes() { 

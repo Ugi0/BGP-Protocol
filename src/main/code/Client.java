@@ -6,10 +6,14 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
-import main.code.threads.KeepAliveThread;
+import main.code.threads.ConnectionManager;
+import messages.Keepalive;
+import messages.Message;
+import messages.Open;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 
 import static main.Main.*;
 
@@ -18,7 +22,7 @@ public class Client extends Thread {
     Socket socket = null;
     InputStream inputStream = null;
     OutputStream outputStream = null;
-    KeepAliveThread keepAliveThread;
+    ConnectionManager connectionManager;
 
     public Client(String ipAdd) {
         this.ipAdd=ipAdd;
@@ -52,29 +56,30 @@ public class Client extends Thread {
         }
 
         //Start a timer thread that will send a keepalive message every 20 seconds
-        keepAliveThread = new KeepAliveThread(outputStream, (byte) 2);
+        connectionManager = new ConnectionManager(outputStream);
 
-        //Listen to messages from the server, should only be keep alive messages
-        byte[] buff = new byte[200]; //200 bytes for keepalive message, change this value when it's known how many bytes an keepalive message should be
-        String message = "";
-        int i = 0;
+        Open openMessage = new Open(0, 20, 0, 0, 0);
+        connectionManager.writeToStream(openMessage.toBytes());
+
+        byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
             while (true) {
                 inputStream.read(buff);
-                while (buff[i] != 0x0) {
-                    message += buff[i];
-                    i++;
-                }
+                Class<? extends Message> clazz = Message.classFromMessage(buff);
+                Message message = clazz.getConstructor(byte[].class).newInstance(buff);
+
+                handleMessage(message);
+
                 printDebug(String.format("Client read %s in the stream", message));
-                message = "";
-                i = 0;
             }
-        }
-        catch(IOException e){
+        } catch (IOException e) {
+            printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));
+        } catch(NullPointerException e){
+            printDebug(String.format("Client %s Closed", getName()));
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
+            printDebug(String.format("Client %s couldn't parse the message", getName()));
             e.printStackTrace();
-            printDebug("Socket read Error");
-        }
-        finally{
+        } finally{
             try {
                 inputStream.close();
             } catch (IOException e) {
@@ -85,14 +90,28 @@ public class Client extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            printDebug("Connection Closed");
+            printDebug("Clinet connection Closed");
 
         }
 
     }
 
+    private void handleMessage(Message received) {
+        if (received instanceof Open) {
+            Open message = (Open) received;
+            
+            connectionManager.setKeepAliveMessage(new Keepalive().toBytes(), message.getHoldTime());
+
+            connectionManager.writeToStream(new Keepalive().toBytes());
+            
+            //Handle open message
+            //Send a open message back to the sender and set up keepAlive messages
+
+        }  
+    }
+
     @Override
     public void interrupt() {
-        keepAliveThread.kill();
+        connectionManager.kill();
     }
 }

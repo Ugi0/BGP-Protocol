@@ -2,8 +2,14 @@ package main.code.threads;
 
 import java.io.IOException;
 import java.net.Socket;
+
+import messages.Message;
+
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+
+import main.code.Server;
 
 import static main.Main.*;
 
@@ -11,9 +17,12 @@ public class ServerThread extends Thread {
     InputStream inputStream = null;
     OutputStream outputStream = null;
     Socket socket=null;
-    KeepAliveThread keepAliveThread;
+    ConnectionManager connectionManager;
 
-    public ServerThread(Socket s) {
+    Server parent;
+
+    public ServerThread(Socket s, Server parent) {
+        this.parent = parent;
         socket = s;
         try {
             s.setSoTimeout(60000); //milliseconds, timeouts after 1min
@@ -31,33 +40,32 @@ public class ServerThread extends Thread {
             printDebug("IO error in server thread");
         }
 
-        //Start a timer thread that will send a keepalive message every 20 seconds
-        keepAliveThread = new KeepAliveThread(outputStream, (byte) 1);
+        connectionManager = new ConnectionManager(outputStream);
 
-        byte[] buff = new byte[2000];
-        String message = "";
-        int i = 0;
+        byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
             while (true) {
                 inputStream.read(buff);
-                while (buff[i] != 0x0) {
-                    message += buff[i];
-                    i++;
-                }
+                Class<? extends Message> clazz = Message.classFromMessage(buff);
+                Message message = clazz.getConstructor(byte[].class).newInstance(buff);
+
+                parent.handleMessage(message, this);
+
                 printDebug(String.format("Server read %s in the stream", message));
-                message = "";
-                i = 0;
             }
         } catch (IOException e) {
-            printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));
+            printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
         } catch(NullPointerException e){
-            printDebug(String.format("Client %s Closed", getName()));
+            printDebug(String.format("Server %s Closed", getName()));
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
+            printDebug(String.format("Server %s couldn't parse the message", getName()));
+            e.printStackTrace();
         }
 
 
         finally {    
             try {
-                printDebug("Connection Closing..");
+                printDebug("Server connection Closing..");
                 if (inputStream != null){
                     inputStream.close(); 
                     printDebug(" Socket Input Stream Closed");
@@ -81,6 +89,10 @@ public class ServerThread extends Thread {
 
     @Override
     public void interrupt() {
-        keepAliveThread.kill();
+        connectionManager.kill();
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 }

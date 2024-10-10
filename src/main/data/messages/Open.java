@@ -1,5 +1,11 @@
 package messages;
 
+import static main.Main.printDebug;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
+
 public class Open extends Message {
 
     /*
@@ -24,12 +30,11 @@ public class Open extends Message {
 
     private static final int OPEN_MESSAGE_SIZE_NO_PARM = 10; 
     private static final int DEFAULT_BGP_VERSION = 4;
-    private static final int VERSION_START = 0;
-    private static final int MYAS_START = 1;
-    private static final int HOLD_TIME_START = 3;
-    private static final int BGP_IDENTIFIER_START = 5;
-    private static final int OPT_PARAM_LEN_START = 9;
-    private static final int OPT_PARAM_START = 10;
+    private static final int VERSION_LENGTH = 1;
+    private static final int MYAS_LENGTH = 2;
+    private static final int HOLD_TIME_LENGTH = 2;
+    private static final int BGP_IDENTIFIER_LENGTH = 4;
+    private static final int OPT_PARAM_LEN = 1;
     
     
     private int version;
@@ -53,41 +58,48 @@ public class Open extends Message {
     public Open(int myAS, int holdtime, int BGPidentifier, int optParamLen, int optParam){
       super();
 
-      version = DEFAULT_BGP_VERSION;
-      AS = myAS;
-      holdTime = holdtime;
-      identifier = BGPidentifier;
-      OptParamLen = optParamLen;
-      OptParams = optParam;
-      type = TYPE_OPEN;
+      this.version = DEFAULT_BGP_VERSION;
+      this.AS = myAS;
+      this.holdTime = holdtime;
+      this.identifier = BGPidentifier;
+      this.OptParamLen = optParamLen;
+      this.OptParams = optParam;
+      this.type = TYPE_OPEN;
 
-      message = toBytes(); 
+      this.message = toBytes(); 
     };
 
     @Override
     byte[] contentToBytes() {
-      byte[] openMessage = new byte[OPEN_MESSAGE_SIZE_NO_PARM + OptParamLen];
-      openMessage[VERSION_START] = (byte) version;
-      for (int i = MYAS_START; i < HOLD_TIME_START; i++) {
-          openMessage[i] = (byte) ((AS >> (8 * (HOLD_TIME_START-MYAS_START - 1 - i))) & 0xFF);
-      }
-      for (int i = HOLD_TIME_START; i < BGP_IDENTIFIER_START; i++) {
-          openMessage[i] = (byte) ((holdTime >> (8 * (BGP_IDENTIFIER_START-HOLD_TIME_START - 1 - i))) & 0xFF);
-      }
-      for (int i = BGP_IDENTIFIER_START; i < OPT_PARAM_LEN_START; i++) {
-          openMessage[i] = (byte) ((identifier >> (8 * (OPT_PARAM_LEN_START-BGP_IDENTIFIER_START - 1 - i))) & 0xFF);
-      }
-      for (int i = OPT_PARAM_LEN_START; i < OPT_PARAM_START; i++) {
-          openMessage[i] = (byte) ((OptParamLen >> (8 * (OPT_PARAM_START-OPT_PARAM_LEN_START - 1 - i))) & 0xFF);
-      }
-      //TODO? do we need optional parameters? Also, should this be big-endian?
-      if (OptParamLen > 0) {
-          for (int i = OPT_PARAM_START; i < OPT_PARAM_START + OptParamLen; i++) {
-              openMessage[i] = (byte) ((OptParams >> (8 * (OptParamLen - 1 - i))) & 0xFF);
-          }
-      } 
+      List<Byte> bytes = new ArrayList<>();
 
-      return openMessage;
+      addToByteList(getVersion(), VERSION_LENGTH, bytes);
+      addToByteList(getAS(), MYAS_LENGTH, bytes);
+      addToByteList(getHoldTime(), HOLD_TIME_LENGTH, bytes);
+      addToByteList(getIdentifier(), BGP_IDENTIFIER_LENGTH, bytes);
+      addToByteList(OptParamLen, OPT_PARAM_LEN, bytes);
+
+      byte[] byteArr = new byte[bytes.size()];
+        for (int i = 0; i < bytes.size(); i++) {
+            byteArr[i] = bytes.get(i);
+        }
+        return byteArr;
+    }
+
+    public int getVersion() {
+      return version;
+    }
+
+    public int getAS() {
+      return AS;
+    }
+
+    public int getHoldTime() {
+      return holdTime;
+    }
+
+    public int getIdentifier() {
+      return identifier;
     }
 
 }

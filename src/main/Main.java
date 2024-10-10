@@ -84,9 +84,9 @@ public class Main {
         return Stream.of(value.split(",")).map(e -> Integer.parseInt(e.strip())).toArray(Integer[]::new);
     }
 
-    public static void printDebug(String message) {
+    public static void printDebug(Object message) {
         if (debug) {
-            System.out.println(message);
+            System.out.println(message.toString());
         }
     }
 }
