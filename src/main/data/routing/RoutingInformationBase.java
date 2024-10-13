@@ -1,19 +1,39 @@
-package routing;
+package main.data.routing;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RoutingInformationBase{
+	int ownASN;
 	List<Route> AdjRIBsIn; //All routes received with OPEN or UPDATE messages
 	List<Route> LocRIB; //Only best routes (shortest AS_PATH) filtered from AdjRIBsIn
-	List<Route> AdjRIBsOut; //Routes which are advertised to neighbourgs
+	List<Route> AdjRIBsOut; //Routes which are advertised to neighbours
+	RoutingTable routingTable;
 	
-	public RoutingInformationBase() {
+	public RoutingInformationBase(int ownAddress, int ownASN) {
+		this.ownASN = ownASN;
 		AdjRIBsIn = new ArrayList<Route>();
 		LocRIB = new ArrayList<Route>();
 		AdjRIBsOut = new ArrayList<Route>();
+		routingTable = new RoutingTable();
+		//Adds the route to the router itself since it is the only one known before connecting
+		ArrayList<Integer> defaultPath = new ArrayList<Integer>();
+		defaultPath.add(ownASN);
+		Route defaultRoute = new Route(ownAddress, defaultPath, ownAddress);
+		AdjRIBsIn.add(defaultRoute);
+		LocRIB.add(defaultRoute);
+		AdjRIBsOut.add(defaultRoute);
+		routingTable.addRoute(defaultRoute);
 	}
 	
 	private void addRoute(Route route) {
+
+		for (int ASN : route.AS_PATH) {
+			if (ASN == ownASN) {
+				return;
+			}
+		}
+		route.AS_PATH.addFirst(ownASN);
+		filter(route);
 		AdjRIBsIn.add(route);
 	}
 	
@@ -29,7 +49,6 @@ public class RoutingInformationBase{
 			removeRoute(route);
 		}
 		else if (type == 1){
-			filter(route); //Filtering first so the new route is not compared with itself
 			addRoute(route);
 		}
 	}
@@ -41,27 +60,30 @@ public class RoutingInformationBase{
 		Route bestRoute = null;
 		ArrayList<Route> oldRoutes = new ArrayList<Route>();;
 		int sameDestinations = 0;
-		for (int i = 0; i < AdjRIBsIn.size(); i++) {
-			if (AdjRIBsIn.get(i).destinationAddress == route.destinationAddress) {
-				sameDestinations =+ 1;
-				if (AdjRIBsIn.get(i).AS_PATH.length > route.AS_PATH.length) {
-					bestRoute = route;
-					oldRoutes.add(AdjRIBsIn.get(i));
-				} else {
-					bestRoute = AdjRIBsIn.get(i);
-				}
-			}
-		}
+        for (Route r : AdjRIBsIn) {
+            if (r.destinationAddress == route.destinationAddress) {
+                sameDestinations = +1;
+                if (r.AS_PATH.size() > route.AS_PATH.size()) {
+                    bestRoute = route;
+                    oldRoutes.add(r);
+                } else {
+                    bestRoute = r;
+                }
+            }
+        }
 		if (sameDestinations == 0) {
 			LocRIB.add(route);
 			AdjRIBsOut.add(route);
+			routingTable.addRoute(route);
 		}
 		else if (bestRoute.equals(route)) {
-			for (int j = 0; j < oldRoutes.size(); j++) {
-				removeRoute(oldRoutes.get(j));
-			}
+            for (Route oldRoute : oldRoutes) {
+                removeRoute(oldRoute);
+				routingTable.removeRoute(oldRoute);
+            }
 			LocRIB.add(route);
 			AdjRIBsOut.add(route);
+			routingTable.addRoute(route);
 		}
 	}
 }
