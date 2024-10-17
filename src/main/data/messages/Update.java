@@ -1,7 +1,9 @@
 package messages;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Update extends Message {
@@ -57,9 +59,8 @@ public class Update extends Message {
         index = 0;
         while (index < totPathAttrLen) {
             PathAttribute pathAttr = new PathAttribute(getValue(2), getValue(1));
-            pathAttr.setValue(getValue(pathAttr.getLength()));
+            pathAttr.setValue(getBytes(pathAttr.getLength()));
             totPathAttr.add(pathAttr);
-
             index += 3 + pathAttr.getLength();
         }
         int networkReachLength = super.length - 23 - totPathAttrLen - withdrawnRoutLen;
@@ -97,30 +98,70 @@ public class Update extends Message {
             return bytes;
         }
     }
+
+    public byte[] getNextHop() {
+        Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.Next_Hop.getValue()).findFirst();
+        if (optionalSource.isPresent()) {
+            return optionalSource.get().toBytes();
+        }
+        return null;
+    }
+
+    public byte[] getSource() {
+        Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.Origin.getValue()).findFirst();
+        if (optionalSource.isPresent()) {
+            return optionalSource.get().toBytes();
+        }
+        return null;
+    }
+
+    public List<Integer> getAS() {
+        Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.AS_Path.getValue()).findFirst();
+        if (optionalSource.isPresent()) {
+            List<Integer> res = new ArrayList<>();
+            for (int i = 0; i < optionalSource.get().value.length; i++) {
+                res.add(Integer.valueOf(optionalSource.get().value[i]));
+            }
+            return res;
+        }
+        return null;
+    }
     
     private class PathAttribute {
         int AttrFlags;
         int AttrType;
         int AttrLength;
-        int value;
+        byte[] value;
         public PathAttribute(int AttrType, int AttrLength) {
             this.AttrFlags = (AttrType << 8) & 0xFF;
             this.AttrType = AttrType & 0xFF;
             this.AttrLength = AttrLength;
         }
-        public void setValue(int value) {
+        public void setValue(byte[] value) {
             this.value = value;
         }
         public int getLength() {
             return AttrLength;
         }
-        public List<Byte> toBytes() {
+        public List<Byte> toByteList() {
             List<Byte> bytes = new ArrayList<>();
             bytes.add(Integer.valueOf(AttrFlags).byteValue());
             bytes.add(Integer.valueOf(AttrType).byteValue());
             bytes.add(Integer.valueOf(AttrLength).byteValue());
-            bytes.add(Integer.valueOf(value).byteValue());
+            for (Byte b : value) {
+                bytes.add(b);
+            }
+
             return bytes;
+        }
+
+        public byte[] toBytes() {
+            List<Byte> bytes = toByteList();
+            byte[] byteArr = new byte[bytes.size()];
+            for (int i = 0; i < bytes.size(); i++) {
+                byteArr[i] = bytes.get(i);
+            }
+            return byteArr;
         }
     }
 
@@ -133,8 +174,8 @@ public class Update extends Message {
         }
         bytes.add(Integer.valueOf(totPathAttr.stream().mapToInt(e -> 3 + e.getLength()).sum()).byteValue());
         for (PathAttribute pathAttribute : totPathAttr) {
-            bytes.addAll(pathAttribute.toBytes());
-        }
+            bytes.addAll(pathAttribute.toByteList());
+        } 
         for (RouteInformation networkReachabilityInf : networkReachabilityInform) {
             bytes.addAll(networkReachabilityInf.toBytes());
         }
@@ -146,7 +187,7 @@ public class Update extends Message {
         return byteArr;
     }
 
-    enum AttributeTypes {
+    public enum AttributeTypes {
         Origin(1), AS_Path(2),
         Next_Hop(3), Multi_Exit_Disc(4),
         Local_Pref(5), Atomic_Aggregate(6),

@@ -9,7 +9,7 @@ public class RoutingInformationBase{
 	List<Route> AdjRIBsOut; //Routes which are advertised to neighbours
 	RoutingTable routingTable;
 	
-	public RoutingInformationBase(int[] ownAddress, int ownASN) {
+	public RoutingInformationBase(byte[] ownAddress, int ownASN) {
 		this.ownASN = ownASN;
 		AdjRIBsIn = new ArrayList<Route>();
 		LocRIB = new ArrayList<Route>();
@@ -23,6 +23,14 @@ public class RoutingInformationBase{
 		LocRIB.add(defaultRoute);
 		AdjRIBsOut.add(defaultRoute);
 		routingTable.addRoute(defaultRoute);
+	}
+
+	public void print() {
+		System.out.println(String.format("ownASN: %s", ownASN));
+		System.out.println(String.format("AdjRIBsIn: %s", AdjRIBsIn.toString()));
+		System.out.println(String.format("LocRIB: %s", LocRIB.toString()));
+		System.out.println(String.format("AdjRIBsOut: %s", AdjRIBsOut.toString()));
+		routingTable.print();
 	}
 	
 	private void addRoute(Route route) {
@@ -43,14 +51,18 @@ public class RoutingInformationBase{
 		AdjRIBsOut.remove(route);
 	}
 	
-	protected void updateRoute(Route route, int type) {
+	public void updateRoute(Route route, RouteUpdateType type) {
 		//Type 0 means removing and 1 means adding the route
-		if (type == 0) {
+		if (type.equals(RouteUpdateType.REMOVE)) {
 			removeRoute(route);
 		}
-		else if (type == 1){
+		else if (type.equals(RouteUpdateType.ADD)){
 			addRoute(route);
 		}
+	}
+
+	public enum RouteUpdateType {
+		ADD, REMOVE
 	}
 	
 	private void filter(Route route) {

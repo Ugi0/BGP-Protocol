@@ -52,6 +52,7 @@ public class ConnectionManager implements Runnable {
      * @param message
      */
     public void writeToStream(Message message) {
+        printDebug("Writing to stream: " + message);
         try {
             stream.write(message.toBytes());
             stream.flush();

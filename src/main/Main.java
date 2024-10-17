@@ -1,7 +1,6 @@
 package main;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,24 +16,23 @@ public class Main {
     public static boolean debug = true;
     private static int routerCount = 0;
     private static HashMap<Integer, Integer[]> connections = new HashMap<>();
-    private static boolean connectionsMarker = false;
+    private static List<Router> routers;
     public static void main(String[] args) {
 
-        List<Router> routers = new ArrayList<>();
+        routers = new ArrayList<>();
 
         parseConfig();
 
         for (int i = 0; i < routerCount; i++) {
             routers.add(new Router(String.format("127.0.%s.0", i+1), 
-                Arrays.stream(connections.get(i+1)).map(e -> String.format("127.0.%s.0", e)).toArray(String[]::new)));
+            Arrays.stream(connections.get(i+1)).map(e -> String.format("127.0.%s.0", e)).toArray(String[]::new)));
         }
 
         Scanner scanner = new Scanner(System.in);
         try {
             while (true) {
-                //System.out.println("Command: ");
                 String command = scanner.nextLine();
-                //TODO handle commands somehow here
+                handleCommand(command);
             }
         } finally {
             scanner.close();
@@ -58,7 +56,38 @@ public class Main {
         }
     }
 
+    /**
+     * Handle command instructions from terminal
+     * @param command
+     */
+    private static void handleCommand(String command) {
+        command = command.toLowerCase();
+        String[] stringParts = command.split(" ");
+        switch (stringParts[0]) {
+            case "get":
+                if (stringParts.length == 1) return;
+                switch (stringParts[1]) {
+                    case "routing":
+                        for (Router router : routers) {
+                            router.printRoutingTable();
+                        }
+                        break;
+                
+                    default:
+                        printDebug(stringParts[1]);
+                        break;
+                }
+                break;
+        
+            default:
+                printDebug(stringParts[0]);
+                break;
+        }
+        //TODO
+    }
+
     private static void parseConfig() {
+        boolean connectionsMarker = false;
         BufferedReader reader;
         try {
             reader = new BufferedReader(new FileReader("src/main/.config"));

@@ -34,6 +34,10 @@ public class Router {
         }    
     }
 
+    public void printRoutingTable() {
+        server.printRoutingTable();
+    }
+
     public void kill() {
         server.interrupt();
         for (Client client : connections) {

@@ -95,4 +95,8 @@ public class ServerThread extends Thread {
     public ConnectionManager getConnectionManager() {
         return connectionManager;
     }
+
+    public byte[] getSocketAddress() {
+        return socket.getInetAddress().getAddress();
+    }
 }

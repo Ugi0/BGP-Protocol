@@ -6,7 +6,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import main.code.threads.ServerThread;
+import routing.Route;
 import routing.RoutingInformationBase;
+import routing.RoutingInformationBase.RouteUpdateType;
 import messages.Keepalive;
 import messages.Message;
 import messages.Notification;
@@ -33,7 +35,7 @@ public class Server extends Thread {
         connections = new ArrayList<>();
         ip=ipAdd;
 
-        int[] ipArr = IpAddToIntArray(ipAdd);
+        byte[] ipArr = IpAddToIntArray(ipAdd);
 
         routingTable = new RoutingInformationBase(ipArr, ipArr[2]);
     }
@@ -71,6 +73,7 @@ public class Server extends Thread {
      * @param source
      */
     public void handleMessage(Message received, ServerThread source) {
+        printDebug("Server received" + received);
         if (received instanceof Open) {
             Open message = (Open) received;
             
@@ -95,10 +98,13 @@ public class Server extends Thread {
      */
     private void handleRoutingTableChange(Open message, ServerThread source) {
         //TODO Handle changing routing table
+        routingTable.updateRoute(
+            new Route(source.getSocketAddress(), new ArrayList<>(message.getAS()), source.getSocketAddress()),
+            RouteUpdateType.ADD);
 
-        if ("1".equals("2")) { //if routing table changed - change this
-            handleSendingToConnections(null);
-        }
+        //if (null) { //if routing table changed - change this
+        //    handleSendingToConnections(null);
+        //}
     }
 
     /**
@@ -109,9 +115,13 @@ public class Server extends Thread {
     private void handleRoutingTableChange(Update message, ServerThread source) {
         //TODO Handle changing routing table
 
-        if ("1".equals("2")) { //if routing table changed - change this
-            handleSendingToConnections(null);
-        }
+        routingTable.updateRoute(
+            new Route(message.getSource(), message.getAS(), message.getNextHop()),
+            RouteUpdateType.ADD);
+
+        //if (null) { //if routing table changed - change this
+        //    handleSendingToConnections(null);
+        //}
 
     }
 
@@ -121,18 +131,22 @@ public class Server extends Thread {
      * @param message
      */
     private void handleSendingToConnections(Message message) {
-        connections.forEach(e -> {
-            e.getConnectionManager().writeToStream(message);
-        });
+        //connections.forEach(e -> {
+        //    e.getConnectionManager().writeToStream(message);
+        //});
     }
 
-    private int[] IpAddToIntArray(String addr) {
-        int[] arr = new int[4];
+    private byte[] IpAddToIntArray(String addr) {
+        byte[] arr = new byte[4];
         int index = 0;
         for (String part : addr.split("\\.")) {
-            arr[index++] = Integer.valueOf(part);
+            arr[index++] = Byte.valueOf(part);
         }
         return arr;
+    }
+
+    public void printRoutingTable() {
+        routingTable.print();
     }
 
     @Override

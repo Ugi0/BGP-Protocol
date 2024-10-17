@@ -58,6 +58,10 @@ public abstract class Message {
         }
     }
 
+    protected int getCurrentIndex() {
+        return index;
+    }
+
     /**
      * Get next {@code octects} bytes from the message and combine those to a single int.
      * Should only be used when Message is constructed using {@code byte[]}
@@ -72,6 +76,15 @@ public abstract class Message {
         }
         index += octects;
         return res;
+    }
+
+    protected byte[] getBytes(int octects) {
+        byte[] bytes = new byte[octects];
+        for (int i = 0; i< octects; i++) {
+            bytes[i] = message[index+i];
+        }
+        index += octects;
+        return bytes;
     }
 
     /**
