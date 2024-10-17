@@ -1,4 +1,4 @@
-package main.data.routing;
+package routing;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +9,7 @@ public class RoutingInformationBase{
 	List<Route> AdjRIBsOut; //Routes which are advertised to neighbours
 	RoutingTable routingTable;
 	
-	public RoutingInformationBase(int ownAddress, int ownASN) {
+	public RoutingInformationBase(int[] ownAddress, int ownASN) {
 		this.ownASN = ownASN;
 		AdjRIBsIn = new ArrayList<Route>();
 		LocRIB = new ArrayList<Route>();
@@ -32,7 +32,7 @@ public class RoutingInformationBase{
 				return;
 			}
 		}
-		route.AS_PATH.addFirst(ownASN);
+		route.AS_PATH.add(ownASN);
 		filter(route);
 		AdjRIBsIn.add(route);
 	}

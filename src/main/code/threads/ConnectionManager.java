@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import messages.Message;
+
 public class ConnectionManager implements Runnable {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     ScheduledFuture<?> future;
@@ -20,9 +22,15 @@ public class ConnectionManager implements Runnable {
         this.stream = stream;
     }
 
-    public void setKeepAliveMessage(byte[] keepaliveMessage, int timeout) {
+    /**
+     * Set the message that the connection should send after a given timeout
+     * This message can't be changed for a given connection after creation
+     * @param keepaliveMessage
+     * @param timeout
+     */
+    public void setKeepAliveMessage(Message keepaliveMessage, int timeout) {
         this.timeout = timeout;
-        this.keepaliveMessage = keepaliveMessage;
+        this.keepaliveMessage = keepaliveMessage.toBytes();
 
         future = scheduler.scheduleWithFixedDelay(this, timeout, timeout, TimeUnit.SECONDS);
     }
@@ -39,9 +47,13 @@ public class ConnectionManager implements Runnable {
         }
     }
 
-    public void writeToStream(byte[] message) {
+    /**
+     * Write a message to the underlying connection
+     * @param message
+     */
+    public void writeToStream(Message message) {
         try {
-            stream.write(message);
+            stream.write(message.toBytes());
             stream.flush();
             if (future != null) {
                 future.cancel(true); //Reset keepalive timer

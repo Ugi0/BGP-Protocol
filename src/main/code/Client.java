@@ -59,7 +59,7 @@ public class Client extends Thread {
         connectionManager = new ConnectionManager(outputStream);
 
         Open openMessage = new Open(0, 20, 0, 0, 0);
-        connectionManager.writeToStream(openMessage.toBytes());
+        connectionManager.writeToStream(openMessage);
 
         byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
@@ -68,9 +68,9 @@ public class Client extends Thread {
                 Class<? extends Message> clazz = Message.classFromMessage(buff);
                 Message message = clazz.getConstructor(byte[].class).newInstance(buff);
 
-                handleMessage(message);
-
                 printDebug(String.format("Client read %s in the stream", message));
+
+                handleMessage(message);
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));
@@ -96,17 +96,18 @@ public class Client extends Thread {
 
     }
 
+    /**
+     * Handle client receiving a message
+     * @param received
+     */
     private void handleMessage(Message received) {
+        //Client shouldn't receive anything else than keepalive messages
         if (received instanceof Open) {
             Open message = (Open) received;
             
-            connectionManager.setKeepAliveMessage(new Keepalive().toBytes(), message.getHoldTime());
+            connectionManager.setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
-            connectionManager.writeToStream(new Keepalive().toBytes());
-            
-            //Handle open message
-            //Send a open message back to the sender and set up keepAlive messages
-
+            connectionManager.writeToStream(new Keepalive());
         }  
     }
 

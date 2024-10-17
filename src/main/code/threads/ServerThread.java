@@ -49,9 +49,9 @@ public class ServerThread extends Thread {
                 Class<? extends Message> clazz = Message.classFromMessage(buff);
                 Message message = clazz.getConstructor(byte[].class).newInstance(buff);
 
-                parent.handleMessage(message, this);
-
                 printDebug(String.format("Server read %s in the stream", message));
+
+                parent.handleMessage(message, this);
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));

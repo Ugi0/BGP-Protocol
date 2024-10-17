@@ -1,25 +1,31 @@
-package main.data.routing;
+package routing;
 
 import java.util.HashMap;
+import java.util.stream.IntStream;
 
 public class RoutingTable{
-	private HashMap<Integer, Integer> addresses; //destinationAddress as key and nextHop as value
+	private HashMap<Integer[], Integer[]> addresses; //destinationAddress as key and nextHop as value
 	
 	public RoutingTable(){
 		addresses = new HashMap<>();
 	}
 	
-	public int getNextHop(int destinationAddress) {
-		int nextHop = addresses.get(destinationAddress);
+	public Integer[] getNextHop(int destinationAddress) {
+		Integer[] nextHop = addresses.get(
+			IntStream.of( destinationAddress ).boxed().toArray( Integer[]::new )
+		);
 		return nextHop;
 	}
 	
 	protected void addRoute(Route route) {
-		addresses.put(route.destinationAddress, route.nextHop);
+		addresses.put(
+			IntStream.of( route.destinationAddress ).boxed().toArray( Integer[]::new ),
+			IntStream.of( route.nextHop ).boxed().toArray( Integer[]::new )
+		);
 	}
 	
 	protected void removeRoute(Route route) {
-		addresses.remove(route.destinationAddress);
+		addresses.remove(IntStream.of( route.destinationAddress ).boxed().toArray( Integer[]::new ));
 	}
 	
 }

@@ -2,6 +2,7 @@ package messages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Update extends Message {
     private int withdrawnRoutLen;
@@ -25,6 +26,16 @@ public class Update extends Message {
       |   Network Layer Reachability Information (variable) |
       +-----------------------------------------------------+
      */
+
+     public Update(List<RouteInformation> removedRoutes, List<PathAttribute> pathAttributes, List<RouteInformation> networkReachability) {
+        withdrawnRoutLen = removedRoutes.stream().collect(Collectors.summingInt(e -> e.length));
+        withdrawnRoutes = removedRoutes;
+
+        totPathAttrLen = pathAttributes.stream().collect(Collectors.summingInt(e -> 3 + e.getLength()));
+        totPathAttr = pathAttributes;
+
+        networkReachabilityInform = networkReachability;
+     }
 
     public Update(byte[] message) {
         super(message);
