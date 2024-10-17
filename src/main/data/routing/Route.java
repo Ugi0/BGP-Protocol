@@ -10,7 +10,7 @@ public class Route{
 	//private int localPref;
 	//private int MED;
 	
-	public Route(int destinationAddress[], ArrayList<Integer> AS_PATH, int nextHop[]) {
+	public Route(int[] destinationAddress, ArrayList<Integer> AS_PATH, int[] nextHop) {
 		this.destinationAddress = destinationAddress;
 		this.AS_PATH = AS_PATH;
 		this.nextHop = nextHop;
