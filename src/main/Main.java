@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.stream.Stream;
 
 import main.code.Router;
+import main.code.Visualizer;
 
 public class Main {
     public static boolean debug = true;
@@ -52,6 +53,17 @@ public class Main {
                 line = reader.readLine();
 			}
 			reader.close();
+
+            //DEBUG
+            System.out.println("hashmap: ");
+            for (HashMap.Entry<Integer, Integer[]> entry : connections.entrySet()) {
+                Integer key = entry.getKey();
+                Integer[] valueArray = entry.getValue();
+                System.out.println("Key: " + key + ", Value: " + Arrays.toString(valueArray));
+            }
+
+            Visualizer visuals = new Visualizer(connections);
+
 
             for (int i = 0; i < routerCount; i++) {
                 routers.add(new Router(String.format("127.0.%s.0", i+1), 
