@@ -33,45 +33,58 @@ public class RoutingInformationBase{
 		routingTable.print();
 	}
 	
-	private void addRoute(Route route) {
+	private boolean addRoute(Route route) {
 
+		boolean tableChanged;
 		for (int ASN : route.AS_PATH) {
 			if (ASN == ownASN) {
-				return;
+				return false;
 			}
 		}
 		route.AS_PATH.add(ownASN);
-		filter(route);
+		tableChanged = filter(route);
 		AdjRIBsIn.add(route);
+		return tableChanged;
 	}
 	
-	private void removeRoute(Route route) {
-		AdjRIBsIn.remove(route);
-		LocRIB.remove(route);
-		AdjRIBsOut.remove(route);
+	private boolean removeRoute(Route route) {
+		boolean tableChanged;
+		if (AdjRIBsIn.contains(route)){
+			AdjRIBsIn.remove(route);
+		}
+		if (LocRIB.contains(route)){
+			LocRIB.remove(route);
+		}
+		if (AdjRIBsOut.contains(route)) {
+			AdjRIBsOut.remove(route);
+		}
+		tableChanged = routingTable.removeRoute();
+		return tableChanged;
 	}
 	
-	public void updateRoute(Route route, RouteUpdateType type) {
-		//Type 0 means removing and 1 means adding the route
+	public boolean updateRoute(Route route, RouteUpdateType type) {
+		boolean tableChanged = false;
 		if (type.equals(RouteUpdateType.REMOVE)) {
-			removeRoute(route);
+			tableChanged = removeRoute(route);
 		}
 		else if (type.equals(RouteUpdateType.ADD)){
-			addRoute(route);
+			tableChanged = addRoute(route);
 		}
+		return tableChanged;
 	}
 
 	public enum RouteUpdateType {
 		ADD, REMOVE
 	}
 	
-	private void filter(Route route) {
+	private boolean filter(Route route) {
 		//decision process if the route should be added to LocRIB and AdjRIBsOut or only to AdjRIBsIn
 		//comparing AS_PATH length with every route in AdjRIBsIn with same destination
 		//If new route is better than already existing one, need to remove the old one and add new one
 		Route bestRoute = null;
 		ArrayList<Route> oldRoutes = new ArrayList<Route>();;
 		int sameDestinations = 0;
+		boolean tableChanged = false;
         for (Route r : AdjRIBsIn) {
             if (r.destinationAddress == route.destinationAddress) {
                 sameDestinations = +1;
@@ -87,6 +100,7 @@ public class RoutingInformationBase{
 			LocRIB.add(route);
 			AdjRIBsOut.add(route);
 			routingTable.addRoute(route);
+			tableChanged = true;
 		}
 		else if (bestRoute.equals(route)) {
             for (Route oldRoute : oldRoutes) {
@@ -96,6 +110,8 @@ public class RoutingInformationBase{
 			LocRIB.add(route);
 			AdjRIBsOut.add(route);
 			routingTable.addRoute(route);
+			tableChanged = true;
 		}
+		return tableChanged;
 	}
 }

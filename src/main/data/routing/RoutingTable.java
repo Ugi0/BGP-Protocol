@@ -31,8 +31,13 @@ public class RoutingTable{
 		);
 	}
 	
-	protected void removeRoute(Route route) {
-		addresses.remove(toByteArray(route.destinationAddress));
+	protected boolean removeRoute(Route route) {
+		boolean tableChanged = false;
+		if (addresses.containsKey(toByteArray(route.destinationAddress))) {
+			addresses.remove(toByteArray(route.destinationAddress));
+			tableChanged = true;
+		}
+		return tableChanged;
 	}
 
 	private Byte[] toByteArray(byte[] bytes) {
