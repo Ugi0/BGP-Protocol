@@ -58,7 +58,7 @@ public class RoutingInformationBase{
 		if (AdjRIBsOut.contains(route)) {
 			AdjRIBsOut.remove(route);
 		}
-		tableChanged = routingTable.removeRoute();
+		tableChanged = routingTable.removeRoute(route);
 		return tableChanged;
 	}
 	
