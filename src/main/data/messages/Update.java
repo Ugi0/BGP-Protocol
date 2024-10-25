@@ -1,10 +1,12 @@
 package messages;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.Arrays;
 
 public class Update extends Message {
     private int withdrawnRoutLen;
@@ -14,6 +16,9 @@ public class Update extends Message {
                                             //Attribute Type is a two-octet field that consists of the Attribute Flags octet followed by the Attribute Type Code octet.
                                             // https://www.freesoft.org/CIE/RFC/1771/9.htm
     private List<RouteInformation> networkReachabilityInform;
+
+    private static final int WithdrawnRoutesLength = 2;
+    private static final int TotalPathAttributesLength = 2;
 
     /*
      *+-----------------------------------------------------+
@@ -30,6 +35,10 @@ public class Update extends Message {
      */
 
      public Update(List<RouteInformation> removedRoutes, List<PathAttribute> pathAttributes, List<RouteInformation> networkReachability) {
+        if (removedRoutes == null) removedRoutes = new ArrayList<>();
+        if (pathAttributes == null) pathAttributes = new ArrayList<>();
+        if (networkReachability == null) networkReachability = new ArrayList<>(); 
+
         withdrawnRoutLen = removedRoutes.stream().collect(Collectors.summingInt(e -> e.length));
         withdrawnRoutes = removedRoutes;
 
@@ -76,7 +85,15 @@ public class Update extends Message {
         }
     }
 
-    private class RouteInformation {
+    public Update addToAS(byte AS) {
+        List<Integer> path = getAS();
+        path.add(Integer.valueOf(AS));
+
+        setAS(path);
+        return this;
+    }
+
+    public static class RouteInformation {
         int length;
         List<Integer> prefix;
 
@@ -89,9 +106,11 @@ public class Update extends Message {
             prefix.add(Integer.valueOf(value));
         }
 
-        public List<Byte> toBytes() {
+        public List<Byte>toBytes() {
             List<Byte> bytes = new ArrayList<>();
-            bytes.add(Integer.valueOf(length).byteValue());
+            if (length != 0) {
+                bytes.add(Integer.valueOf(length).byteValue());
+            }
             for (int i = 0; i< length; i++) {
                 bytes.add(prefix.get(i).byteValue());
             }
@@ -126,19 +145,30 @@ public class Update extends Message {
         }
         return null;
     }
+
+    public void setAS(List<Integer> AS) {
+        OptionalInt optionalSource = IntStream.range(0, totPathAttr.size())
+            .filter(i -> totPathAttr.get(i).AttrType == AttributeTypes.AS_Path.getValue()).findFirst();
+        if (optionalSource.isPresent()) {
+            totPathAttr.get(optionalSource.getAsInt()).setValue(message);
+        }
+    }
     
-    private class PathAttribute {
+    public static class PathAttribute {
+        public static final int initialLength = 4;
+        
         int AttrFlags;
         int AttrType;
         int AttrLength;
         byte[] value;
-        public PathAttribute(int AttrType, int AttrLength) {
+        public PathAttribute(int type, int AttrLength) {
             this.AttrFlags = (AttrType << 8) & 0xFF;
-            this.AttrType = AttrType & 0xFF;
+            this.AttrType = type & 0xFF;
             this.AttrLength = AttrLength;
         }
-        public void setValue(byte[] value) {
+        public PathAttribute setValue(byte[] value) {
             this.value = value;
+            return this;
         }
         public int getLength() {
             return AttrLength;
@@ -168,18 +198,17 @@ public class Update extends Message {
     @Override
     byte[] contentToBytes() {
         List<Byte> bytes = new ArrayList<>();
-        bytes.add(Integer.valueOf(withdrawnRoutes.stream().mapToInt(e -> e.length).sum()).byteValue());
+        addToByteList(Integer.valueOf(withdrawnRoutes.stream().mapToInt(e -> e.length).sum()), WithdrawnRoutesLength, bytes);
         for (RouteInformation withDrawnRoute : withdrawnRoutes) {
             bytes.addAll(withDrawnRoute.toBytes());
         }
-        bytes.add(Integer.valueOf(totPathAttr.stream().mapToInt(e -> 3 + e.getLength()).sum()).byteValue());
+        addToByteList(Integer.valueOf(totPathAttr.stream().mapToInt(e -> e.getLength()).sum()), TotalPathAttributesLength, bytes);
         for (PathAttribute pathAttribute : totPathAttr) {
             bytes.addAll(pathAttribute.toByteList());
         } 
         for (RouteInformation networkReachabilityInf : networkReachabilityInform) {
             bytes.addAll(networkReachabilityInf.toBytes());
         }
-
         byte[] byteArr = new byte[bytes.size()];
         for (int i = 0; i < bytes.size(); i++) {
             byteArr[i] = bytes.get(i);
@@ -187,7 +216,7 @@ public class Update extends Message {
         return byteArr;
     }
 
-    public enum AttributeTypes {
+    public static enum AttributeTypes {
         Origin(1), AS_Path(2),
         Next_Hop(3), Multi_Exit_Disc(4),
         Local_Pref(5), Atomic_Aggregate(6),
@@ -200,6 +229,10 @@ public class Update extends Message {
 
         AttributeTypes(int value) {
             intValue = value;
+        }
+
+        public static AttributeTypes getType(int value) {
+            return Arrays.asList(values()).stream().filter(e -> e.getValue() == value).findFirst().get();
         }
 
         public int getValue() {

@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Stream;
+import java.util.stream.Stream; 
 
 import main.code.Router;
 
@@ -23,9 +23,12 @@ public class Main {
 
         parseConfig();
 
-        for (int i = 0; i < routerCount; i++) {
-            routers.add(new Router(String.format("127.0.%s.0", i+1), 
-            Arrays.stream(connections.get(i+1)).map(e -> String.format("127.0.%s.0", e)).toArray(String[]::new)));
+        for (int i = 1; i <= routerCount; i++) {
+            final int ownAS = i;
+            routers.add(new Router(String.format("127.0.%s.0", ownAS), 
+                Arrays.stream(connections.get(ownAS)).map(e -> String.format("127.0.%s.0", e)).toArray(String[]::new), 
+                ownAS)
+            );
         }
 
         Scanner scanner = new Scanner(System.in);

@@ -19,13 +19,15 @@ import static main.Main.*;
 
 public class Client extends Thread {
     private String ipAdd;
+    private Integer ownAS;
     Socket socket = null;
     InputStream inputStream = null;
     OutputStream outputStream = null;
     ConnectionManager connectionManager;
 
-    public Client(String ipAdd) {
+    public Client(String ipAdd, Integer AS) {
         this.ipAdd=ipAdd;
+        this.ownAS = AS;
     }
 
     public void run() {
@@ -37,16 +39,16 @@ public class Client extends Thread {
 
         try {
             InetAddress addr = InetAddress.getByName(ipAdd);
-            printDebug(String.format("Attempting to connect to address %s", addr));
+            printDebug(String.format("%s attempting to connect to address %s", ownAS, addr));
             socket = new Socket(addr, 8080); // Port number can be freely chosen as long as it matches the server port.
-            printDebug(String.format("Client connected to address %s", addr));
+            printDebug(String.format("%s client connected to address %s", ownAS, addr));
             socket.setKeepAlive(false);
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
         }
         catch (IOException e){
             e.printStackTrace();
-            if (e.getLocalizedMessage().equals("Connection refused: connect")) {
+            if (e.getLocalizedMessage().equals(String.format("%s connection refused: connect", ownAS))) {
                 printDebug("Connection not yet open");
                 return;
             }
@@ -58,7 +60,7 @@ public class Client extends Thread {
         //Start a timer thread that will send a keepalive message every 20 seconds
         connectionManager = new ConnectionManager(outputStream);
 
-        Open openMessage = new Open(0, 20, 0, 0, 0);
+        Open openMessage = new Open(ownAS, 20, 0, 0, 0);
         connectionManager.writeToStream(openMessage);
 
         byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
@@ -68,7 +70,7 @@ public class Client extends Thread {
                 Class<? extends Message> clazz = Message.classFromMessage(buff);
                 Message message = clazz.getConstructor(byte[].class).newInstance(buff);
 
-                printDebug(String.format("Client read %s in the stream", message));
+                printDebug(String.format("%s client read %s in the stream", ownAS, message));
 
                 handleMessage(message);
             }

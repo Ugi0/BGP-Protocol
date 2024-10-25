@@ -14,15 +14,20 @@ import messages.Message;
 import messages.Notification;
 import messages.Open;
 import messages.Update;
+import messages.Update.AttributeTypes;
+import messages.Update.PathAttribute;
 
 import java.util.List;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static main.Main.*;
 
 public class Server extends Thread {
     private String ip;
+
+    public byte AS;
 
     Socket socket = null;
     ServerSocket serverSocket = null;
@@ -31,13 +36,18 @@ public class Server extends Thread {
 
     RoutingInformationBase routingTable;
 
-    public Server(String ipAdd) {
+    Router parent;
+
+    public Server(String ipAdd, Router parent) {
         connections = new ArrayList<>();
+        this.parent = parent;
         ip=ipAdd;
 
         byte[] ipArr = IpAddToIntArray(ipAdd);
 
-        routingTable = new RoutingInformationBase(ipArr, ipArr[2]);
+        AS = ipArr[2];
+
+        routingTable = new RoutingInformationBase(ipArr, AS);
     }
 
     public void run() {
@@ -57,6 +67,7 @@ public class Server extends Thread {
                 printDebug("connection Established");
     
                 ServerThread st = new ServerThread(socket, this);
+                connections.add(st);
                 st.start();
 
             } catch(Exception e) {
@@ -73,13 +84,12 @@ public class Server extends Thread {
      * @param source
      */
     public void handleMessage(Message received, ServerThread source) {
-        printDebug("Server received" + received);
         if (received instanceof Open) {
             Open message = (Open) received;
             
             source.getConnectionManager().setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
-            source.getConnectionManager().writeToStream(new Open(0, 20, 0, 0, 0));
+            source.getConnectionManager().writeToStream(new Open(AS, 20, 0, 0, 0));
 
             handleRoutingTableChange(message, source);
 
@@ -97,14 +107,23 @@ public class Server extends Thread {
      * @param source
      */
     private void handleRoutingTableChange(Open message, ServerThread source) {
-        //TODO Handle changing routing table
-        routingTable.updateRoute(
-            new Route(source.getSocketAddress(), new ArrayList<>(message.getAS()), source.getSocketAddress()),
-            RouteUpdateType.ADD);
+        if(routingTable.updateRoute(
+            new Route(source.getSocketAddress(), new ArrayList<>(Arrays.asList(message.getAS())), source.getSocketAddress()),
+            RouteUpdateType.ADD)) {
 
-        //if (null) { //if routing table changed - change this
-        //    handleSendingToConnections(null);
-        //}
+            handleSendingToConnections(
+                new Update(null, 
+                new ArrayList<>(Arrays.asList(
+                    new PathAttribute(AttributeTypes.AS_Path.getValue(), PathAttribute.initialLength)
+                        .setValue(new byte[]{AS}),
+                    new PathAttribute(AttributeTypes.Next_Hop.getValue(), PathAttribute.initialLength)
+                        .setValue(new byte[]{AS}),
+                    new PathAttribute(AttributeTypes.Origin.getValue(), PathAttribute.initialLength)
+                        .setValue(new byte[]{AS})
+                )), 
+                null)
+            );
+        }
     }
 
     /**
@@ -113,15 +132,12 @@ public class Server extends Thread {
      * @param source
      */
     private void handleRoutingTableChange(Update message, ServerThread source) {
-        //TODO Handle changing routing table
-
-        routingTable.updateRoute(
+        if(routingTable.updateRoute(
             new Route(message.getSource(), message.getAS(), message.getNextHop()),
-            RouteUpdateType.ADD);
+            RouteUpdateType.ADD)) {
 
-        //if (null) { //if routing table changed - change this
-        //    handleSendingToConnections(null);
-        //}
+            handleSendingToConnections(message.addToAS(AS));
+        }
 
     }
 
@@ -131,9 +147,9 @@ public class Server extends Thread {
      * @param message
      */
     private void handleSendingToConnections(Message message) {
-        //connections.forEach(e -> {
-        //    e.getConnectionManager().writeToStream(message);
-        //});
+        Arrays.asList(parent.getClients()).forEach(e -> 
+            e.connectionManager.writeToStream(message)
+        );
     }
 
     private byte[] IpAddToIntArray(String addr) {

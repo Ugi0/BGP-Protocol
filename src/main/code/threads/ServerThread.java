@@ -42,14 +42,14 @@ public class ServerThread extends Thread {
 
         connectionManager = new ConnectionManager(outputStream);
 
-        byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
             while (true) {
+                byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
                 Class<? extends Message> clazz = Message.classFromMessage(buff);
                 Message message = clazz.getConstructor(byte[].class).newInstance(buff);
 
-                printDebug(String.format("Server read %s in the stream", message));
+                printDebug(String.format("Server %s read %s in the stream", parent.AS, message));
 
                 parent.handleMessage(message, this);
             }

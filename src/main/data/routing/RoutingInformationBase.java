@@ -63,14 +63,13 @@ public class RoutingInformationBase{
 	}
 	
 	public boolean updateRoute(Route route, RouteUpdateType type) {
-		boolean tableChanged = false;
 		if (type.equals(RouteUpdateType.REMOVE)) {
-			tableChanged = removeRoute(route);
+			return removeRoute(route);
 		}
 		else if (type.equals(RouteUpdateType.ADD)){
-			tableChanged = addRoute(route);
+			return addRoute(route);
 		}
-		return tableChanged;
+		return false;
 	}
 
 	public enum RouteUpdateType {
@@ -82,7 +81,7 @@ public class RoutingInformationBase{
 		//comparing AS_PATH length with every route in AdjRIBsIn with same destination
 		//If new route is better than already existing one, need to remove the old one and add new one
 		Route bestRoute = null;
-		ArrayList<Route> oldRoutes = new ArrayList<Route>();;
+		ArrayList<Route> oldRoutes = new ArrayList<Route>();
 		int sameDestinations = 0;
 		boolean tableChanged = false;
         for (Route r : AdjRIBsIn) {
