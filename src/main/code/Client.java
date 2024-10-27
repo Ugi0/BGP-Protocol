@@ -92,7 +92,7 @@ public class Client extends Thread {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            printDebug("Clinet connection Closed");
+            printDebug(String.format("Client %s connection Closed", ownAS));
 
         }
 

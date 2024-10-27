@@ -2,6 +2,7 @@ package routing;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 public class Route{
 	public byte[] destinationAddress; //IP address, can also be named as network or prefix
@@ -15,6 +16,10 @@ public class Route{
 		this.destinationAddress = destinationAddress;
 		this.AS_PATH = AS_PATH;
 		this.nextHop = nextHop;
+
+		if (this.destinationAddress == null) this.destinationAddress = new byte[0];
+		if (this.AS_PATH == null) this.AS_PATH = new ArrayList<>();
+		if (this.nextHop == null) this.nextHop = new byte[0];
 	}
 
 	@Override

@@ -18,6 +18,8 @@ public class ConnectionManager implements Runnable {
     private byte[] keepaliveMessage;
     private int timeout;
 
+    private boolean killed = false;
+
     public ConnectionManager(OutputStream stream) {
         this.stream = stream;
     }
@@ -37,6 +39,7 @@ public class ConnectionManager implements Runnable {
 
     @Override
     public void run() {
+        if (killed) return;
         try {
             stream.write(keepaliveMessage);
             stream.flush();
@@ -44,6 +47,7 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
+            kill();
         }
     }
 
@@ -52,6 +56,7 @@ public class ConnectionManager implements Runnable {
      * @param message
      */
     public void writeToStream(Message message) {
+        if (killed) return;
         printDebug("Writing to stream: " + message);
         try {
             stream.write(message.toBytes());
@@ -63,10 +68,12 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
+            kill();
         }
     }
 
     public void kill() {
         scheduler.shutdown();
+        killed = true;
     }
 }

@@ -64,7 +64,7 @@ public class Open extends Message {
       this.type = TYPE_OPEN;
 
       this.message = toBytes(); 
-    };
+    }
 
     @Override
     byte[] contentToBytes() {

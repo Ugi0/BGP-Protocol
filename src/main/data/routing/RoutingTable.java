@@ -1,13 +1,13 @@
 package routing;
 
-import java.util.HashMap;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RoutingTable{
-	private HashMap<Byte[], Byte[]> addresses; //destinationAddress as key and nextHop as value
+	private ConcurrentHashMap<Byte[], Byte[]> addresses; //destinationAddress as key and nextHop as value
 	
 	public RoutingTable(){
-		addresses = new HashMap<>();
+		addresses = new ConcurrentHashMap<>();
 	}
 	
 	public Byte[] getNextHop(byte[] destinationAddress) {

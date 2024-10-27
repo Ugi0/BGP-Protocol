@@ -21,6 +21,7 @@ import java.util.List;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
 
 import static main.Main.*;
 
@@ -28,6 +29,8 @@ public class Server extends Thread {
     private String ip;
 
     public byte AS;
+
+    private byte[] socketAddress;
 
     Socket socket = null;
     ServerSocket serverSocket = null;
@@ -43,11 +46,11 @@ public class Server extends Thread {
         this.parent = parent;
         ip=ipAdd;
 
-        byte[] ipArr = IpAddToIntArray(ipAdd);
+        socketAddress = IpAddToIntArray(ipAdd);
 
-        AS = ipArr[2];
+        AS = socketAddress[2];
 
-        routingTable = new RoutingInformationBase(ipArr, AS);
+        routingTable = new RoutingInformationBase(socketAddress, AS);
     }
 
     public void run() {
@@ -107,19 +110,36 @@ public class Server extends Thread {
      * @param source
      */
     private void handleRoutingTableChange(Open message, ServerThread source) {
+        byte[] connectedAddress = new byte[]{127,0,(byte) message.getAS(),0};
         if(routingTable.updateRoute(
-            new Route(source.getSocketAddress(), new ArrayList<>(Arrays.asList(message.getAS())), source.getSocketAddress()),
+            new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress),
             RouteUpdateType.ADD)) {
+
+            //TODO The router should advertise to whoever is connecting where it can connect to now
+            //There is some bug in this which causes one of the routers to read Update messages continously
+            /*for (Route route : routingTable.getAdvertisedRoutes()) {
+                source.getConnectionManager().writeToStream(new Update(null, 
+                    new ArrayList<>(Arrays.asList(
+                        new PathAttribute(AttributeTypes.AS_Path.getValue(), route.AS_PATH.size())
+                            .setValue(route.AS_PATH.stream().collect(() -> new ByteArrayOutputStream(), (baos, i) -> baos.write((byte) i.intValue()), (baos1, baos2) -> {}).toByteArray()),
+                        new PathAttribute(AttributeTypes.Next_Hop.getValue(), 4)
+                            .setValue(new byte[]{127, 0, AS, 0}),
+                        new PathAttribute(AttributeTypes.Origin.getValue(), 4)
+                            .setValue(route.destinationAddress)
+                    )), 
+                    null));
+            }*/
 
             handleSendingToConnections(
                 new Update(null, 
                 new ArrayList<>(Arrays.asList(
-                    new PathAttribute(AttributeTypes.AS_Path.getValue(), PathAttribute.initialLength)
-                        .setValue(new byte[]{AS}),
-                    new PathAttribute(AttributeTypes.Next_Hop.getValue(), PathAttribute.initialLength)
-                        .setValue(new byte[]{AS}),
-                    new PathAttribute(AttributeTypes.Origin.getValue(), PathAttribute.initialLength)
-                        .setValue(new byte[]{AS})
+                    new PathAttribute(AttributeTypes.AS_Path.getValue(), 2)
+                        .setValue(new byte[]{(byte) message.getAS(), AS}),
+                    new PathAttribute(AttributeTypes.Next_Hop.getValue(), 4)
+                        .setValue(new byte[]{127, 0, AS, 0}),
+                    new PathAttribute(AttributeTypes.Origin.getValue(), 
+                    4)
+                        .setValue(new byte[]{127, 0, (byte) message.getAS(), 0})
                 )), 
                 null)
             );
@@ -136,7 +156,7 @@ public class Server extends Thread {
             new Route(message.getSource(), message.getAS(), message.getNextHop()),
             RouteUpdateType.ADD)) {
 
-            handleSendingToConnections(message.addToAS(AS));
+            handleSendingToConnections(message.addToAS(AS).setNextHop(socketAddress));
         }
 
     }

@@ -55,8 +55,10 @@ public class ServerThread extends Thread {
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
+            e.printStackTrace();
         } catch(NullPointerException e){
             printDebug(String.format("Server %s Closed", getName()));
+            e.printStackTrace();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
             printDebug(String.format("Server %s couldn't parse the message", getName()));
             e.printStackTrace();

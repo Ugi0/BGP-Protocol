@@ -52,6 +52,7 @@ public class Update extends Message {
         super(message);
         withdrawnRoutes = new ArrayList<>();
         totPathAttr = new ArrayList<>();
+        networkReachabilityInform = new ArrayList<>();
 
         withdrawnRoutLen = getValue(2);
         int index = 0;
@@ -121,15 +122,24 @@ public class Update extends Message {
     public byte[] getNextHop() {
         Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.Next_Hop.getValue()).findFirst();
         if (optionalSource.isPresent()) {
-            return optionalSource.get().toBytes();
+            return optionalSource.get().value;
         }
         return null;
+    }
+
+    public Update setNextHop(byte[] value) {
+        Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.Next_Hop.getValue()).findFirst();
+        if (optionalSource.isPresent()) {
+            optionalSource.get().setValue(value);
+            optionalSource.get().setLength(value.length);
+        }
+        return this;
     }
 
     public byte[] getSource() {
         Optional<PathAttribute> optionalSource = totPathAttr.stream().filter(e -> e.AttrType == AttributeTypes.Origin.getValue()).findFirst();
         if (optionalSource.isPresent()) {
-            return optionalSource.get().toBytes();
+            return optionalSource.get().value;
         }
         return null;
     }
@@ -150,12 +160,18 @@ public class Update extends Message {
         OptionalInt optionalSource = IntStream.range(0, totPathAttr.size())
             .filter(i -> totPathAttr.get(i).AttrType == AttributeTypes.AS_Path.getValue()).findFirst();
         if (optionalSource.isPresent()) {
-            totPathAttr.get(optionalSource.getAsInt()).setValue(message);
+            byte[] bytes = new byte[AS.size()];
+            int index = 0;
+            for (Integer value : AS) {
+                bytes[index] = value.byteValue();
+                index++;
+            }
+            totPathAttr.get(optionalSource.getAsInt()).setValue(bytes);
+            totPathAttr.get(optionalSource.getAsInt()).setLength(AS.size());
         }
     }
     
     public static class PathAttribute {
-        public static final int initialLength = 4;
         
         int AttrFlags;
         int AttrType;
@@ -169,6 +185,9 @@ public class Update extends Message {
         public PathAttribute setValue(byte[] value) {
             this.value = value;
             return this;
+        }
+        public void setLength(int value) {
+            this.AttrLength = value;
         }
         public int getLength() {
             return AttrLength;
@@ -202,7 +221,7 @@ public class Update extends Message {
         for (RouteInformation withDrawnRoute : withdrawnRoutes) {
             bytes.addAll(withDrawnRoute.toBytes());
         }
-        addToByteList(Integer.valueOf(totPathAttr.stream().mapToInt(e -> e.getLength()).sum()), TotalPathAttributesLength, bytes);
+        addToByteList(Integer.valueOf(totPathAttr.stream().mapToInt(e -> 3 + e.getLength()).sum()), TotalPathAttributesLength, bytes);
         for (PathAttribute pathAttribute : totPathAttr) {
             bytes.addAll(pathAttribute.toByteList());
         } 

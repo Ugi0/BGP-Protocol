@@ -34,6 +34,10 @@ public abstract class Message {
         index = HEADER_MARKER_SIZE;
         length = getValue(2);
         type = getValue(1);
+
+        byte[] messageCopy = new byte[length];
+        System.arraycopy(message, 0, messageCopy, 0, length);
+        message = messageCopy;
     }
 
     public static Class<? extends Message> classFromMessage(byte[] message) {
