@@ -4,12 +4,20 @@ package main.code;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import main.code.threads.ConnectionManager;
 import messages.Keepalive;
 import messages.Message;
+import messages.Notification;
 import messages.Open;
+import messages.Update;
+import messages.Update.AttributeTypes;
+import messages.Update.PathAttribute;
+import routing.Route;
+import routing.RoutingInformationBase.RouteUpdateType;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,7 +33,10 @@ public class Client extends Thread {
     OutputStream outputStream = null;
     ConnectionManager connectionManager;
 
-    public Client(String ipAdd, Integer AS) {
+    Router parent;
+
+    public Client(String ipAdd, Integer AS, Router parent) {
+        this.parent = parent;
         this.ipAdd=ipAdd;
         this.ownAS = AS;
     }
@@ -59,6 +70,7 @@ public class Client extends Thread {
 
         //Start a timer thread that will send a keepalive message every 20 seconds
         connectionManager = new ConnectionManager(outputStream);
+        parent.addToConnections(connectionManager);
 
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
         connectionManager.writeToStream(openMessage);
@@ -67,6 +79,7 @@ public class Client extends Thread {
         try {
             while (true) {
                 inputStream.read(buff);
+                
                 Class<? extends Message> clazz = Message.classFromMessage(buff);
                 Message message = clazz.getConstructor(byte[].class).newInstance(buff);
 
@@ -76,8 +89,10 @@ public class Client extends Thread {
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));
+            e.printStackTrace();
         } catch(NullPointerException e){
             printDebug(String.format("Client %s Closed", getName()));
+            e.printStackTrace();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
             printDebug(String.format("Client %s couldn't parse the message", getName()));
             e.printStackTrace();
@@ -110,7 +125,13 @@ public class Client extends Thread {
             connectionManager.setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
             connectionManager.writeToStream(new Keepalive());
-        }  
+
+            parent.getServer().handleRoutingTableChange(message, connectionManager);
+        } else if (received instanceof Update) {
+            parent.getServer().handleMessage(received, connectionManager);
+        } else if (received instanceof Notification) {
+            parent.getServer().handleMessage(received, connectionManager);
+        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import main.code.threads.ConnectionManager;
 import main.code.threads.ServerThread;
 import routing.Route;
 import routing.RoutingInformationBase;
@@ -39,7 +40,7 @@ public class Server extends Thread {
 
     RoutingInformationBase routingTable;
 
-    Router parent;
+    public Router parent;
 
     public Server(String ipAdd, Router parent) {
         connections = new ArrayList<>();
@@ -86,18 +87,18 @@ public class Server extends Thread {
      * @param received
      * @param source
      */
-    public void handleMessage(Message received, ServerThread source) {
+    public void handleMessage(Message received, ConnectionManager source) {
         if (received instanceof Open) {
             Open message = (Open) received;
             
-            source.getConnectionManager().setKeepAliveMessage(new Keepalive(), message.getHoldTime());
+            source.setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
-            source.getConnectionManager().writeToStream(new Open(AS, 20, 0, 0, 0));
+            source.writeToStream(new Open(AS, 20, 0, 0, 0));
 
             handleRoutingTableChange(message, source);
 
         } else if (received instanceof Update) {
-            handleRoutingTableChange((Update) received, source);
+            handleRoutingTableChange((Update) received);
         } else if (received instanceof Notification) {
             //Some error happened
             //Either close connection or resend 
@@ -109,26 +110,26 @@ public class Server extends Thread {
      * @param message
      * @param source
      */
-    private void handleRoutingTableChange(Open message, ServerThread source) {
+    public void handleRoutingTableChange(Open message, ConnectionManager source) {
         byte[] connectedAddress = new byte[]{127,0,(byte) message.getAS(),0};
         if(routingTable.updateRoute(
             new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress),
             RouteUpdateType.ADD)) {
 
-            //TODO The router should advertise to whoever is connecting where it can connect to now
-            //There is some bug in this which causes one of the routers to read Update messages continously
-            /*for (Route route : routingTable.getAdvertisedRoutes()) {
-                source.getConnectionManager().writeToStream(new Update(null, 
-                    new ArrayList<>(Arrays.asList(
-                        new PathAttribute(AttributeTypes.AS_Path.getValue(), route.AS_PATH.size())
-                            .setValue(route.AS_PATH.stream().collect(() -> new ByteArrayOutputStream(), (baos, i) -> baos.write((byte) i.intValue()), (baos1, baos2) -> {}).toByteArray()),
-                        new PathAttribute(AttributeTypes.Next_Hop.getValue(), 4)
-                            .setValue(new byte[]{127, 0, AS, 0}),
-                        new PathAttribute(AttributeTypes.Origin.getValue(), 4)
-                            .setValue(route.destinationAddress)
-                    )), 
-                    null));
-            }*/
+            synchronized(routingTable.getAdvertisedRoutes()) {
+                for (Route route : routingTable.getAdvertisedRoutes()) {
+                    source.writeToStream(new Update(null, 
+                        new ArrayList<>(Arrays.asList(
+                            new PathAttribute(AttributeTypes.AS_Path.getValue(), route.AS_PATH.size())
+                                .setValue(route.AS_PATH.stream().collect(() -> new ByteArrayOutputStream(), (baos, i) -> baos.write((byte) i.intValue()), (baos1, baos2) -> {}).toByteArray()),
+                            new PathAttribute(AttributeTypes.Next_Hop.getValue(), 4)
+                                .setValue(new byte[]{127, 0, AS, 0}),
+                            new PathAttribute(AttributeTypes.Origin.getValue(), 4)
+                                .setValue(route.destinationAddress)
+                        )), 
+                        null));
+                }
+            }
 
             handleSendingToConnections(
                 new Update(null, 
@@ -151,7 +152,7 @@ public class Server extends Thread {
      * @param message
      * @param source
      */
-    private void handleRoutingTableChange(Update message, ServerThread source) {
+    private void handleRoutingTableChange(Update message) {
         if(routingTable.updateRoute(
             new Route(message.getSource(), message.getAS(), message.getNextHop()),
             RouteUpdateType.ADD)) {
@@ -166,10 +167,16 @@ public class Server extends Thread {
      * This should only be sent if routing table has actually changed to not cause infinite loops
      * @param message
      */
-    private void handleSendingToConnections(Message message) {
-        Arrays.asList(parent.getClients()).forEach(e -> 
-            e.connectionManager.writeToStream(message)
-        );
+    public void handleSendingToConnections(Update message)  {
+        synchronized(parent.getConnections()) {
+
+            parent.getConnections().forEach(e -> {
+                if (e != null) {
+                    e.writeToStream(message);
+                }
+            }
+            );
+        }
     }
 
     private byte[] IpAddToIntArray(String addr) {

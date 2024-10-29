@@ -2,21 +2,39 @@ package main.code;
 
 import static main.Main.printDebug;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import main.code.threads.ConnectionManager;
+
 public class Router {
     private String serverAddess;
     private Server server;
     private Integer ownAS;
-    private String[] connectionAddresses;
-    private Client[] connections;
+    private String[] clientAddresses;
+    private Client[] clients;
+
+    private List<ConnectionManager> connections;
 
     public Router(String address, String[] connectionAddresses, Integer ownAS) {
         serverAddess = address;
         this.ownAS = ownAS;
-        this.connectionAddresses = connectionAddresses;
-        connections = new Client[connectionAddresses.length];
+        this.clientAddresses = connectionAddresses;
+        clients = new Client[connectionAddresses.length];
+
+        connections = Collections.synchronizedList(new ArrayList<>());
 
         createServerThread();
         createClientThreads();
+    }
+
+    public void addToConnections(ConnectionManager connection) {
+        connections.add(connection);
+    }
+
+    public List<ConnectionManager> getConnections() {
+        return this.connections;
     }
 
     private void createServerThread() {
@@ -27,17 +45,21 @@ public class Router {
 
     private void createClientThreads() {
         int i = 0;
-        for (String ip : connectionAddresses) {
-            connections[i] = new Client(ip, ownAS);
+        for (String ip : clientAddresses) {
+            clients[i] = new Client(ip, ownAS, this);
             i++;
         }
         for (int j = 0; j < i; j++) {
-            connections[j].start();
+            clients[j].start();
         }    
     }
 
     public Client[] getClients() {
-        return connections;
+        return clients;
+    }
+
+    public Server getServer() {
+        return server;
     }
 
     public void printRoutingTable() {
@@ -46,7 +68,7 @@ public class Router {
 
     public void kill() {
         server.interrupt();
-        for (Client client : connections) {
+        for (Client client : clients) {
             client.interrupt();
         }
     }

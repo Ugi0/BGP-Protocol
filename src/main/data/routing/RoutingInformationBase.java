@@ -1,6 +1,9 @@
 package routing;
 
 import java.util.Arrays;
+
+import static main.Main.printDebug;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
@@ -38,24 +41,27 @@ public class RoutingInformationBase{
 
 	public void print() {
 		System.out.println(String.format("ownASN: %s", ownASN));
-		System.out.println(String.format("AdjRIBsIn: %s", AdjRIBsIn.toString()));
-		System.out.println(String.format("LocRIB: %s", LocRIB.toString()));
-		System.out.println(String.format("AdjRIBsOut: %s", AdjRIBsOut.toString()));
+		//System.out.println(String.format("AdjRIBsIn: %s", AdjRIBsIn.toString()));
+		//System.out.println(String.format("LocRIB: %s", LocRIB.toString()));
+		//System.out.println(String.format("AdjRIBsOut: %s", AdjRIBsOut.toString()));
 		routingTable.print();
 	}
 	
 	private boolean addRoute(Route route) {
-
 		boolean tableChanged;
+		//printDebug(String.format("%s %s", route.destinationAddress[2], ownASN));
 		if (route.destinationAddress[2] == ownASN) return false;
  		for (int ASN : route.AS_PATH) {
 			if (ASN == ownASN) {
 				return false;
 			}
 		}
+
 		route.AS_PATH.add(ownASN);
 		tableChanged = filter(route);
-		AdjRIBsIn.add(route);
+		if (!AdjRIBsIn.contains(route)) {
+			AdjRIBsIn.add(route);
+		}
 		return tableChanged;
 	}
 	

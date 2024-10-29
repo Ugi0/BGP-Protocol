@@ -7,6 +7,7 @@ public abstract class Message {
     public static final int HEADER_SIZE = 19;
     public static final int HEADER_MARKER_SIZE = 16;
     public static final int MAX_MESSAGE_LENGTH = 1500;
+    public static final int MIN_MESSAGE_LENGTH = 19;
 
     //Message types
     protected static final int TYPE_OPEN = 1;
@@ -26,11 +27,12 @@ public abstract class Message {
     public Message(byte[] message) {
         this.message = message;
 
-        for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
+        //The header is already checked
+        /*for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
             if (getValue(1) != 255) {
                 throw new Error();
             }
-        }
+        }*/
         index = HEADER_MARKER_SIZE;
         length = getValue(2);
         type = getValue(1);
@@ -41,11 +43,12 @@ public abstract class Message {
     }
 
     public static Class<? extends Message> classFromMessage(byte[] message) {
-        for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
+        //The header is already checked
+        /*for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
             if ((message[i] & 0xFF) != 255) {
                 throw new Error();
             }
-        }
+        }*/
         int type = message[HEADER_MARKER_SIZE+2];
 
         switch (type) {

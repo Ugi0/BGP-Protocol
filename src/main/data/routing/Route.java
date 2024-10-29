@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 
-public class Route{
+public class Route {
 	public byte[] destinationAddress; //IP address, can also be named as network or prefix
 	public List<Integer> AS_PATH;
 	public byte[] nextHop; //IP address of the next hop in AS path
@@ -35,5 +35,21 @@ public class Route{
 	}
 	public static String byteArrayToString(Byte[] bytes) {
 		return String.format("%s.%s.%s.%s", String.valueOf(bytes[0]), String.valueOf(bytes[1]), String.valueOf(bytes[2]), String.valueOf(bytes[3]));
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof Route)) return false;
+		Route r = (Route) o;
+		if (Arrays.compare(r.nextHop, this.nextHop) != 0) {
+			return false;
+		}
+		if (Arrays.compare(r.destinationAddress, this.destinationAddress) != 0) {
+			return false;
+		}
+		if (!r.AS_PATH.equals(this.AS_PATH)) {
+			return false;
+		}
+		return true;
 	}
 }

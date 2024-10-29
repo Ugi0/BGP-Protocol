@@ -41,6 +41,7 @@ public class ServerThread extends Thread {
         }
 
         connectionManager = new ConnectionManager(outputStream);
+        parent.parent.addToConnections(connectionManager);
 
         try {
             while (true) {
@@ -51,7 +52,7 @@ public class ServerThread extends Thread {
 
                 printDebug(String.format("Server %s read %s in the stream", parent.AS, message));
 
-                parent.handleMessage(message, this);
+                parent.handleMessage(message, connectionManager);
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
