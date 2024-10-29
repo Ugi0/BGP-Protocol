@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 import main.code.threads.ConnectionManager;
 import main.code.threads.ServerThread;
@@ -74,7 +75,12 @@ public class Server extends Thread {
                 connections.add(st);
                 st.start();
 
-            } catch(Exception e) {
+            } catch(SocketException e){
+                printDebug("Can't accept connection, server is closed");
+                break;
+            }
+            
+            catch(Exception e) {
                 e.printStackTrace();
                 printDebug("Connection Error");
             }
@@ -194,13 +200,20 @@ public class Server extends Thread {
 
     @Override
     public void interrupt() {
+        if (socket != null){
         try {
             socket.close();
         } catch (IOException ignored) {}
+        }
+        if (serverSocket != null){
         try {
             serverSocket.close();
         } catch (IOException ignored) {}
         super.interrupt();
+        }else{
+            printDebug("socket already null");
+        }
+        
     }
 
 }

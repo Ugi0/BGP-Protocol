@@ -11,7 +11,7 @@ import main.code.threads.ConnectionManager;
 public class Router {
     private String serverAddess;
     private Server server;
-    private Integer ownAS;
+    public final Integer ownAS;
     private String[] clientAddresses;
     private Client[] clients;
 
