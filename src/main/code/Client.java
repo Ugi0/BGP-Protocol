@@ -4,8 +4,6 @@ package main.code;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import main.code.threads.ConnectionManager;
@@ -14,10 +12,6 @@ import messages.Message;
 import messages.Notification;
 import messages.Open;
 import messages.Update;
-import messages.Update.AttributeTypes;
-import messages.Update.PathAttribute;
-import routing.Route;
-import routing.RoutingInformationBase.RouteUpdateType;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -75,17 +69,27 @@ public class Client extends Thread {
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
         connectionManager.writeToStream(openMessage);
 
-        byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
             while (true) {
+                byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
+                int index = 0;
                 
-                Class<? extends Message> clazz = Message.classFromMessage(buff);
-                Message message = clazz.getConstructor(byte[].class).newInstance(buff);
+                while (true) {
+                    byte[] newArray = new byte[Message.MAX_MESSAGE_LENGTH];
+                    System.arraycopy(buff, index, newArray, 0, Message.MAX_MESSAGE_LENGTH - index);
 
-                printDebug(String.format("%s client read %s in the stream", ownAS, message));
+                    Class<? extends Message> clazz = Message.classFromMessage(newArray);
+                    if (clazz == null) break;
 
-                handleMessage(message);
+                    Message message = clazz.getConstructor(byte[].class).newInstance(newArray);
+
+                    index += message.getLength();
+
+                    printDebug(String.format("%s client read %s in the stream", ownAS, message));
+
+                    handleMessage(message);
+                }
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Client %s terminated abruptly", getName()));

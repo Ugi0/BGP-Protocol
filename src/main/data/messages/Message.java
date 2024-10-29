@@ -94,6 +94,10 @@ public abstract class Message {
         return bytes;
     }
 
+    public int getLength() {
+        return this.length;
+    }
+
     /**
      * Change the header of the message to bytes
      * @return

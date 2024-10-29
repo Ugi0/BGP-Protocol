@@ -47,12 +47,23 @@ public class ServerThread extends Thread {
             while (true) {
                 byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
-                Class<? extends Message> clazz = Message.classFromMessage(buff);
-                Message message = clazz.getConstructor(byte[].class).newInstance(buff);
+                int index = 0;
+                
+                while (true) {
+                    byte[] newArray = new byte[Message.MAX_MESSAGE_LENGTH];
+                    System.arraycopy(buff, index, newArray, 0, Message.MAX_MESSAGE_LENGTH - index);
 
-                printDebug(String.format("Server %s read %s in the stream", parent.AS, message));
+                    Class<? extends Message> clazz = Message.classFromMessage(newArray);
+                    if (clazz == null) break;
 
-                parent.handleMessage(message, connectionManager);
+                    Message message = clazz.getConstructor(byte[].class).newInstance(newArray);
+
+                    index += message.getLength();
+
+                    printDebug(String.format("%s client read %s in the stream", parent.AS, message));
+
+                    parent.handleMessage(message, connectionManager);
+                }
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
