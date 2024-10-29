@@ -41,22 +41,36 @@ public class ServerThread extends Thread {
         }
 
         connectionManager = new ConnectionManager(outputStream);
+        parent.parent.addToConnections(connectionManager);
 
-        byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
         try {
             while (true) {
+                byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
-                Class<? extends Message> clazz = Message.classFromMessage(buff);
-                Message message = clazz.getConstructor(byte[].class).newInstance(buff);
+                int index = 0;
+                
+                while (true) {
+                    byte[] newArray = new byte[Message.MAX_MESSAGE_LENGTH];
+                    System.arraycopy(buff, index, newArray, 0, Message.MAX_MESSAGE_LENGTH - index);
 
-                parent.handleMessage(message, this);
+                    Class<? extends Message> clazz = Message.classFromMessage(newArray);
+                    if (clazz == null) break;
 
-                printDebug(String.format("Server read %s in the stream", message));
+                    Message message = clazz.getConstructor(byte[].class).newInstance(newArray);
+
+                    index += message.getLength();
+
+                    printDebug(String.format("%s client read %s in the stream", parent.AS, message));
+
+                    parent.handleMessage(message, connectionManager);
+                }
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
+            e.printStackTrace();
         } catch(NullPointerException e){
             printDebug(String.format("Server %s Closed", getName()));
+            e.printStackTrace();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
             printDebug(String.format("Server %s couldn't parse the message", getName()));
             e.printStackTrace();
@@ -94,5 +108,9 @@ public class ServerThread extends Thread {
 
     public ConnectionManager getConnectionManager() {
         return connectionManager;
+    }
+
+    public byte[] getSocketAddress() {
+        return socket.getInetAddress().getAddress();
     }
 }

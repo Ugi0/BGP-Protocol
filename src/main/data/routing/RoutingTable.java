@@ -1,25 +1,52 @@
-package main.data.routing;
+package routing;
 
-import java.util.HashMap;
+import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RoutingTable{
-	private HashMap<Integer, Integer> addresses; //destinationAddress as key and nextHop as value
+	private ConcurrentHashMap<Byte[], Byte[]> addresses; //destinationAddress as key and nextHop as value
 	
 	public RoutingTable(){
-		addresses = new HashMap<>();
+		addresses = new ConcurrentHashMap<>();
 	}
 	
-	public int getNextHop(int destinationAddress) {
-		int nextHop = addresses.get(destinationAddress);
+	public Byte[] getNextHop(byte[] destinationAddress) {
+		Byte[] nextHop = addresses.get(
+			toByteArray(destinationAddress)
+		);
 		return nextHop;
 	}
 	
 	protected void addRoute(Route route) {
-		addresses.put(route.destinationAddress, route.nextHop);
+		addresses.put(
+			toByteArray(route.destinationAddress),
+			toByteArray(route.nextHop)
+		);
+	}
+
+	public void print() {
+		System.out.println(String.format("Routingtable addresses: %s", 
+			addresses.entrySet().stream()
+			.map(e -> String.format("%s: %s", Route.byteArrayToString(e.getKey()), Route.byteArrayToString(e.getValue()))).collect(Collectors.toList()).toString())
+		);
 	}
 	
-	protected void removeRoute(Route route) {
-		addresses.remove(route.destinationAddress);
+	protected boolean removeRoute(Route route) {
+		boolean tableChanged = false;
+		if (addresses.containsKey(toByteArray(route.destinationAddress))) {
+			addresses.remove(toByteArray(route.destinationAddress));
+			tableChanged = true;
+		}
+		return tableChanged;
+	}
+
+	private Byte[] toByteArray(byte[] bytes) {
+		Byte[] byteObjects = new Byte[bytes.length];
+		int i = 0;
+		for (byte b : bytes) {
+			byteObjects[i++] = b;
+		}
+		return byteObjects;
 	}
 	
 }
