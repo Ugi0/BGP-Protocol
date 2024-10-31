@@ -7,8 +7,8 @@ import java.util.Random;
 public class Visualizer {
 
     public Visualizer(HashMap<Integer, Integer[]> connections){
-        int totalColumns = 120;
-        int totalRows = 25;
+        int totalColumns = Integer.max(100, connections.size()*14);
+        int totalRows = Integer.max(20, connections.size()*4);
         char[][] intro;
 
         intro = bgpSimulation(totalColumns);
@@ -63,15 +63,25 @@ public class Visualizer {
                     }
                 }
             }
-
             // Drawing connections between boxes
             Finished = true; //Assume finish, will set to false if a collision occurs
             for(int i = 0; i < centerOfBox.length; i++){
-                for (int connectedBox : connections.get(centerOfBox[i][0])){
-
+                int boxToGet = centerOfBox[i][0];
+                if (i==9){
+                    boxToGet = 10;
+                }
+               
+                for (int connectedBox : connections.get(boxToGet)){
+                    //System.out.println("current box... "+connectedBox);
                     int[] connectedCoordinates = new int[2];
                     for (int[] row : centerOfBox) { //Checks center coordinates of target box
+                        //System.out.println("current row..." + row[0]);
                         if (row[0] == connectedBox) {
+                            connectedCoordinates[0] = row[1];
+                            connectedCoordinates[1] = row[2];
+                            break;
+                        }
+                        if (row[0] == 0){
                             connectedCoordinates[0] = row[1];
                             connectedCoordinates[1] = row[2];
                             break;
@@ -83,22 +93,6 @@ public class Visualizer {
                     int endY = connectedCoordinates[0];
                     int endX = connectedCoordinates[1];
 
-                    //Adjust coordinates based on relative positions... TODO still needs tweaking
-                    if (startY > endY) {
-                        startY--;  
-                        //endY++;    
-                    } else if (startY<endY){
-                        //startY++;  
-                        //endY--;   
-                    }
-
-                    if (startX > endX) {
-                        startX--;  
-                        //endX++;    
-                    } else if (startX < endX){
-                        startX++;  
-                        //endX--;    
-                    }
 
                     Finished = drawConnection(completeMatrix, startY, startX, endY, endX);
                 }
@@ -151,7 +145,7 @@ public class Visualizer {
         }
 
         int[] mid = new int[]{(startX+endX)/2, (startY+endY)/2};
-        if (matrix[mid[0]][mid[1]] == ' ' || matrix[mid[0]][mid[1]] == '*' || matrix[mid[0]][mid[1]] == '-' || matrix[mid[0]][mid[1]] == '|'){
+        if (matrix[mid[0]][mid[1]] == ' ' || matrix[mid[0]][mid[1]] == '*' || matrix[mid[0]][mid[1]] == '-' ){
             matrix[mid[0]][mid[1]] = '*';
         } else return false;
 
@@ -173,7 +167,7 @@ public class Visualizer {
         }else{
             box = new char[][]{
                 {' ','-', '-', '-', ' '},
-                {'|',' ', '1', '0', '|'},
+                {'|','1', '0', ' ', '|'},
                 {' ', '-', '-', '-',' '},
             };
         }
