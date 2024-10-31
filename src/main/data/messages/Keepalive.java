@@ -1,6 +1,6 @@
 package messages;
 
-public class Keepalive extends Message {
+public class Keepalive extends ControlMessage {
 
 
     public Keepalive(byte[] message) {

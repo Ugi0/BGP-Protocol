@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.Arrays;
 
-public class Update extends Message {
+public class Update extends ControlMessage {
     private int withdrawnRoutLen;
     private List<RouteInformation> withdrawnRoutes; //this field shows all the prefixes that should be removed from the BGP table
     private int totPathAttrLen;

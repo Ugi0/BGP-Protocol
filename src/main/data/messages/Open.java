@@ -3,7 +3,7 @@ package messages;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Open extends Message {
+public class Open extends ControlMessage {
 
     /*
      * 0                   1                   2                   3

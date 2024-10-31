@@ -12,6 +12,7 @@ import routing.RoutingInformationBase;
 import routing.RoutingInformationBase.RouteUpdateType;
 import messages.Keepalive;
 import messages.Message;
+import messages.ControlMessage;
 import messages.Notification;
 import messages.Open;
 import messages.Update;

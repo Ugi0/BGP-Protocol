@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import messages.Message;
+import messages.ControlMessage;
 
 public class ConnectionManager implements Runnable {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -30,7 +30,7 @@ public class ConnectionManager implements Runnable {
      * @param keepaliveMessage
      * @param timeout
      */
-    public void setKeepAliveMessage(Message keepaliveMessage, int timeout) {
+    public void setKeepAliveMessage(ControlMessage keepaliveMessage, int timeout) {
         this.timeout = timeout;
         this.keepaliveMessage = keepaliveMessage.toBytes();
 
@@ -55,7 +55,7 @@ public class ConnectionManager implements Runnable {
      * Write a message to the underlying connection
      * @param message
      */
-    public void writeToStream(Message message) {
+    public void writeToStream(ControlMessage message) {
         if (killed) return;
         printDebug("Writing to stream: " + message);
         try {
