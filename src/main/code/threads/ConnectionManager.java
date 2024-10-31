@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import messages.Message;
+
 public class ConnectionManager implements Runnable {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     ScheduledFuture<?> future;
@@ -16,19 +18,28 @@ public class ConnectionManager implements Runnable {
     private byte[] keepaliveMessage;
     private int timeout;
 
+    private boolean killed = false;
+
     public ConnectionManager(OutputStream stream) {
         this.stream = stream;
     }
 
-    public void setKeepAliveMessage(byte[] keepaliveMessage, int timeout) {
+    /**
+     * Set the message that the connection should send after a given timeout
+     * This message can't be changed for a given connection after creation
+     * @param keepaliveMessage
+     * @param timeout
+     */
+    public void setKeepAliveMessage(Message keepaliveMessage, int timeout) {
         this.timeout = timeout;
-        this.keepaliveMessage = keepaliveMessage;
+        this.keepaliveMessage = keepaliveMessage.toBytes();
 
         future = scheduler.scheduleWithFixedDelay(this, timeout, timeout, TimeUnit.SECONDS);
     }
 
     @Override
     public void run() {
+        if (killed) return;
         try {
             stream.write(keepaliveMessage);
             stream.flush();
@@ -36,12 +47,19 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
+            kill();
         }
     }
 
-    public void writeToStream(byte[] message) {
+    /**
+     * Write a message to the underlying connection
+     * @param message
+     */
+    public void writeToStream(Message message) {
+        if (killed) return;
+        printDebug("Writing to stream: " + message);
         try {
-            stream.write(message);
+            stream.write(message.toBytes());
             stream.flush();
             if (future != null) {
                 future.cancel(true); //Reset keepalive timer
@@ -50,10 +68,12 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
+            kill();
         }
     }
 
     public void kill() {
         scheduler.shutdown();
+        killed = true;
     }
 }
