@@ -11,6 +11,7 @@ import java.util.Scanner;
 import java.util.stream.Stream; 
 
 import main.code.Router;
+import main.code.Visualizer;
 
 public class Main {
     public static boolean debug = true;
@@ -67,6 +68,17 @@ public class Main {
         command = command.toLowerCase();
         String[] stringParts = command.split(" ");
         switch (stringParts[0]) {
+            case "visualize": 
+                //DEBUG
+                System.out.println("hashmap: ");
+                for (HashMap.Entry<Integer, Integer[]> entry : connections.entrySet()) {
+                    Integer key = entry.getKey();
+                    Integer[] valueArray = entry.getValue();
+                    System.out.println("Key: " + key + ", Value: " + Arrays.toString(valueArray));
+                }
+
+                Visualizer visuals = new Visualizer(connections);
+                break;
             case "get":
                 if (stringParts.length == 1) return;
                 switch (stringParts[1]) {
@@ -122,6 +134,7 @@ public class Main {
                 line = reader.readLine();
 			}
 			reader.close();
+
         } catch (IOException e) {
             printDebug("Failed to parse config");
             e.printStackTrace();
