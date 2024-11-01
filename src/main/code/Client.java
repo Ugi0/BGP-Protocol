@@ -9,9 +9,8 @@ import java.util.concurrent.TimeUnit;
 import main.code.threads.ConnectionManager;
 import messages.Keepalive;
 import messages.Message;
-import messages.Notification;
+import messages.ControlMessage;
 import messages.Open;
-import messages.Update;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -63,7 +62,7 @@ public class Client extends Thread {
         }
 
         //Start a timer thread that will send a keepalive message every 20 seconds
-        connectionManager = new ConnectionManager(outputStream);
+        connectionManager = new ConnectionManager(outputStream, ipAdd);
         parent.addToConnections(connectionManager);
 
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
@@ -71,13 +70,13 @@ public class Client extends Thread {
 
         try {
             while (true) {
-                byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
+                byte[] buff = new byte[ControlMessage.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
                 int index = 0;
                 
                 while (true) {
-                    byte[] newArray = new byte[Message.MAX_MESSAGE_LENGTH];
-                    System.arraycopy(buff, index, newArray, 0, Message.MAX_MESSAGE_LENGTH - index);
+                    byte[] newArray = new byte[ControlMessage.MAX_MESSAGE_LENGTH];
+                    System.arraycopy(buff, index, newArray, 0, ControlMessage.MAX_MESSAGE_LENGTH - index);
 
                     Class<? extends Message> clazz = Message.classFromMessage(newArray);
                     if (clazz == null) break;
@@ -131,9 +130,7 @@ public class Client extends Thread {
             connectionManager.writeToStream(new Keepalive());
 
             parent.getServer().handleRoutingTableChange(message, connectionManager);
-        } else if (received instanceof Update) {
-            parent.getServer().handleMessage(received, connectionManager);
-        } else if (received instanceof Notification) {
+        } else {
             parent.getServer().handleMessage(received, connectionManager);
         }
     }
