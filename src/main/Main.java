@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import main.code.Router;
 import main.code.Visualizer;
+import messages.IpPacket;
 
 public class Main {
     public static boolean debug = true;
@@ -77,7 +78,7 @@ public class Main {
                     System.out.println("Key: " + key + ", Value: " + Arrays.toString(valueArray));
                 }
 
-                Visualizer visuals = new Visualizer(connections);
+                new Visualizer(connections);
                 break;
             case "get":
                 if (stringParts.length == 1) return;
@@ -91,6 +92,30 @@ public class Main {
                     default:
                         printDebug(stringParts[1]);
                         break;
+                }
+                break;
+            case "send":
+                String message = stringParts[1];
+                byte[] source = new byte[4];
+                byte[] destination = new byte[4];
+                String sourceString = stringParts[2];
+                String destinationString = stringParts[3];
+
+                int index = 0;
+                for (String s : sourceString.split("\\.")) {
+                    source[index++] = Integer.valueOf(s).byteValue();
+                }
+                index = 0;
+                for (String s : destinationString.split("\\.")) {
+                    destination[index++] = Integer.valueOf(s).byteValue();
+                }
+
+                for (Router r : routers) {
+                    if (r.getRouterAddress().equals(sourceString)) {
+                        r.getServer().handleMessage(
+                            new IpPacket(source, destination, message.getBytes()), 
+                            null);
+                    }
                 }
                 break;
         

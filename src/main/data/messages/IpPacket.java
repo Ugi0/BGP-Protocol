@@ -1,5 +1,6 @@
 package messages;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,16 +19,16 @@ public class IpPacket extends Message {
     //Destination address
     //Options - Not often used
     //Data 
-    public static int HEADER_LENGTH;
-    public static int DEFAULT_VERSION;
-    public static int DEFAULT_IHL;
+    public static int HEADER_LENGTH = 20;
+    public static int DEFAULT_VERSION = 4;
+    public static int DEFAULT_IHL = 20;
     public static int DEFAULT_DSCP;
     public static int DEFAULT_ECN;
     public static int DEFAULT_IDENTIFICATION;
     public static int DEFAULT_FLAGS;
     public static int DEFAULT_FRAGMENT_OFFSET;
-    public static int DEFAULT_TIMETOLIVE;
-    public static int DEFAULT_PROTOCOL;
+    public static int DEFAULT_TIMETOLIVE = 30;
+    public static int DEFAULT_PROTOCOL = 6;
     private int version;
     private int IHL;
     private int DSCP;
@@ -80,9 +81,35 @@ public class IpPacket extends Message {
         this.data = data;
     }
 
+    public String getSource() {
+        StringBuilder ipAddress = new StringBuilder();
+        for (int i = 0; i < source.length; i++) {
+            ipAddress.append(source[i]);
+            if (i < source.length - 1) {
+                ipAddress.append(".");  // Add dots between the numbers
+            }
+        }
+        return ipAddress.toString();
+    }
+
+    public String getDestination() {
+        StringBuilder ipAddress = new StringBuilder();
+        for (int i = 0; i < destination.length; i++) {
+            ipAddress.append(destination[i]);
+            if (i < destination.length - 1) {
+                ipAddress.append(".");  // Add dots between the numbers
+            }
+        }
+        return ipAddress.toString();
+    }
+
     @Override
     public int getLength() {
         return TotalLen;
+    }
+
+    public String getData() {
+        return new String(data, StandardCharsets.UTF_8);
     }
 
     private void makeCheckSum() {
@@ -101,7 +128,7 @@ public class IpPacket extends Message {
         headerChecksum = (ans >> 16) + (ans & 0xFFFF);
     }
 
-    private boolean verifyCheckSum() {
+    public boolean verifyCheckSum() {
         int ans = 0;
         ans += version << 12;
         ans += IHL << 8;
@@ -140,11 +167,22 @@ public class IpPacket extends Message {
         for (byte b : destination) {
             bytes.add(Byte.valueOf(b));
         }
-
+        for (byte b : data) {
+            bytes.add(Byte.valueOf(b));
+        }
+        
         byte[] byteArr = new byte[bytes.size()];
         for (int i = 0; i < bytes.size(); i++) {
             byteArr[i] = bytes.get(i);
         }
         return byteArr;
+    }
+
+    public int getTimeToLive() {
+        return timeToLive;
+    }
+
+    public void decreateTimeToLive() {
+        timeToLive--;
     }
 }

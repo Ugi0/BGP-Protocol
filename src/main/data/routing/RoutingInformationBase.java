@@ -2,8 +2,6 @@ package routing;
 
 import java.util.Arrays;
 
-import static main.Main.printDebug;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
@@ -45,6 +43,10 @@ public class RoutingInformationBase{
 		//System.out.println(String.format("LocRIB: %s", LocRIB.toString()));
 		//System.out.println(String.format("AdjRIBsOut: %s", AdjRIBsOut.toString()));
 		routingTable.print();
+	}
+
+	public RoutingTable getTable() {
+		return routingTable;
 	}
 	
 	private boolean addRoute(Route route) {

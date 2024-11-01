@@ -42,7 +42,6 @@ public class ServerThread extends Thread {
         }
 
         connectionManager = new ConnectionManager(outputStream);
-        parent.parent.addToConnections(connectionManager);
 
         try {
             while (true) {

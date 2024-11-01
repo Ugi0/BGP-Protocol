@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import messages.ControlMessage;
+import messages.Message;
 
 public class ConnectionManager implements Runnable {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -17,11 +18,21 @@ public class ConnectionManager implements Runnable {
     private OutputStream stream;
     private byte[] keepaliveMessage;
     private int timeout;
+    private String address;
 
     private boolean killed = false;
 
-    public ConnectionManager(OutputStream stream) {
+    public ConnectionManager(OutputStream stream, String ipAddress) {
         this.stream = stream;
+        address = ipAddress;
+    }
+
+    public ConnectionManager(OutputStream stream) {
+        this(stream, null);
+    }
+
+    public String getAddress() {
+        return this.address;
     }
 
     /**
@@ -55,7 +66,7 @@ public class ConnectionManager implements Runnable {
      * Write a message to the underlying connection
      * @param message
      */
-    public void writeToStream(ControlMessage message) {
+    public void writeToStream(Message message) {
         if (killed) return;
         printDebug("Writing to stream: " + message);
         try {

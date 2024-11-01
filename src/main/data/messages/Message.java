@@ -11,11 +11,7 @@ public abstract class Message {
         this.message = message;
     }
     public static Class<? extends Message> classFromMessage(byte[] message) {
-        for (int i = 0; i<ControlMessage.HEADER_MARKER_SIZE; i++) {
-            if ((message[i] & 0xFF) != 255) {
-                throw new Error();
-            }
-        }
+
         int type = message[ControlMessage.HEADER_MARKER_SIZE+2];
 
         switch (type) {

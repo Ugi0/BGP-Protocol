@@ -12,7 +12,7 @@ import routing.RoutingInformationBase;
 import routing.RoutingInformationBase.RouteUpdateType;
 import messages.Keepalive;
 import messages.Message;
-import messages.ControlMessage;
+import messages.IpPacket;
 import messages.Notification;
 import messages.Open;
 import messages.Update;
@@ -72,7 +72,6 @@ public class Server extends Thread {
                 printDebug("connection Established");
     
                 ServerThread st = new ServerThread(socket, this);
-                connections.add(st);
                 st.start();
 
             } catch(Exception e) {
@@ -103,6 +102,29 @@ public class Server extends Thread {
         } else if (received instanceof Notification) {
             //Some error happened
             //Either close connection or resend 
+        } else if (received instanceof IpPacket) {
+            IpPacket message = (IpPacket) received;
+
+            if (message.getDestination().equals(parent.getRouterAddress())) {
+                //Received a packet meant for me
+                System.out.println(String.format("Router %s received message %s", AS, message.getData()));
+            } else {
+                if (message.verifyCheckSum()) {
+                    printDebug("Message checksum was not valid");
+                    return;
+                }
+                if (message.getTimeToLive() == 0) return;
+                message.decreateTimeToLive();
+                System.out.println(String.format("Router %s received message which it will pass on", AS));
+                //Pass it to the next hop
+                String nextHop = routingTable.getTable().getNextHop(message.getDestination());
+
+                for (ConnectionManager connection : parent.getConnections()) {
+                    if (connection.getAddress().equals(nextHop)) {
+                        connection.writeToStream(message);
+                    }
+                }
+            }
         }
     }
 

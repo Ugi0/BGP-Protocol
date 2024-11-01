@@ -10,9 +10,7 @@ import main.code.threads.ConnectionManager;
 import messages.Keepalive;
 import messages.Message;
 import messages.ControlMessage;
-import messages.Notification;
 import messages.Open;
-import messages.Update;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -64,7 +62,7 @@ public class Client extends Thread {
         }
 
         //Start a timer thread that will send a keepalive message every 20 seconds
-        connectionManager = new ConnectionManager(outputStream);
+        connectionManager = new ConnectionManager(outputStream, ipAdd);
         parent.addToConnections(connectionManager);
 
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
@@ -132,9 +130,7 @@ public class Client extends Thread {
             connectionManager.writeToStream(new Keepalive());
 
             parent.getServer().handleRoutingTableChange(message, connectionManager);
-        } else if (received instanceof Update) {
-            parent.getServer().handleMessage(received, connectionManager);
-        } else if (received instanceof Notification) {
+        } else {
             parent.getServer().handleMessage(received, connectionManager);
         }
     }
