@@ -20,8 +20,11 @@ public class ConnectionManager implements Runnable {
 
     private boolean killed = false;
 
-    public ConnectionManager(OutputStream stream) {
+    private ConnectionContainer parent;
+
+    public ConnectionManager(OutputStream stream, ConnectionContainer parent) {
         this.stream = stream;
+        this.parent = parent;
     }
 
     /**
@@ -40,6 +43,9 @@ public class ConnectionManager implements Runnable {
     @Override
     public void run() {
         if (killed) return;
+        if (parent.lastKeepAliveMessageTime() + parent.keepAliveTimeout() < TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis())) {
+            kill();
+        }
         try {
             stream.write(keepaliveMessage);
             stream.flush();

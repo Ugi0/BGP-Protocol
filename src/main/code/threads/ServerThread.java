@@ -2,6 +2,7 @@ package main.code.threads;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 import messages.Message;
 
@@ -13,11 +14,13 @@ import main.code.Server;
 
 import static main.Main.*;
 
-public class ServerThread extends Thread {  
+public class ServerThread extends Thread implements ConnectionContainer {  
     InputStream inputStream = null;
     OutputStream outputStream = null;
     Socket socket=null;
     ConnectionManager connectionManager;
+
+    long lastMessageTime = 0;
 
     Server parent;
 
@@ -40,7 +43,7 @@ public class ServerThread extends Thread {
             printDebug("IO error in server thread");
         }
 
-        connectionManager = new ConnectionManager(outputStream);
+        connectionManager = new ConnectionManager(outputStream, this);
         parent.parent.addToConnections(connectionManager);
 
         try {
@@ -64,6 +67,7 @@ public class ServerThread extends Thread {
 
                     parent.handleMessage(message, connectionManager);
                 }
+                lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
             }
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
@@ -112,5 +116,15 @@ public class ServerThread extends Thread {
 
     public byte[] getSocketAddress() {
         return socket.getInetAddress().getAddress();
+    }
+
+    @Override
+    public long lastKeepAliveMessageTime() {
+        return lastMessageTime;
+    }
+
+    @Override
+    public int keepAliveTimeout() {
+        return 60;
     }
 }

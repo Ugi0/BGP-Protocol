@@ -122,6 +122,8 @@ public class Server extends Thread {
             new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress),
             RouteUpdateType.ADD)) {
 
+            //TODO handle removing routes if 
+
             synchronized(routingTable.getAdvertisedRoutes()) {
                 for (Route route : routingTable.getAdvertisedRoutes()) {
                     source.writeToStream(new Update(null, 
@@ -183,6 +185,13 @@ public class Server extends Thread {
             }
             );
         }
+    }
+
+    public void removeFromRoutingTable(String ipAddr) {
+        Route removedRoute = routingTable.getAdvertisedRoute(ipAddr);
+        routingTable.updateRoute(removedRoute, RouteUpdateType.REMOVE);
+        //TODO populate the removedRoutes here
+        handleSendingToConnections(new Update(null, null, null));
     }
 
     private byte[] IpAddToIntArray(String addr) {

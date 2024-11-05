@@ -39,6 +39,18 @@ public class RoutingInformationBase{
 		return LocRIB;
 	}
 
+	public Route getAdvertisedRoute(String ipAddr) {
+		byte[] bytes = new byte[4];
+		int index = 0;
+		for (String p : ipAddr.split("\\.")) {
+			bytes[index++] = Integer.valueOf(p).byteValue();
+		}
+		for (Route r : LocRIB) {
+			if (Arrays.equals(r.destinationAddress, bytes)) return r;
+		}
+		return null;
+	}
+
 	public void print() {
 		System.out.println(String.format("ownASN: %s", ownASN));
 		//System.out.println(String.format("AdjRIBsIn: %s", AdjRIBsIn.toString()));

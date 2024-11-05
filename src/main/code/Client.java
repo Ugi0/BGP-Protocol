@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+import main.code.threads.ConnectionContainer;
 import main.code.threads.ConnectionManager;
 import messages.Keepalive;
 import messages.Message;
@@ -19,13 +20,15 @@ import java.lang.reflect.InvocationTargetException;
 
 import static main.Main.*;
 
-public class Client extends Thread {
+public class Client extends Thread implements ConnectionContainer {
     private String ipAdd;
     private Integer ownAS;
     Socket socket = null;
     InputStream inputStream = null;
     OutputStream outputStream = null;
     ConnectionManager connectionManager;
+
+    long lastMessageTime = 0;
 
     Router parent;
 
@@ -36,11 +39,6 @@ public class Client extends Thread {
     }
 
     public void run() {
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         try {
             InetAddress addr = InetAddress.getByName(ipAdd);
@@ -63,7 +61,7 @@ public class Client extends Thread {
         }
 
         //Start a timer thread that will send a keepalive message every 20 seconds
-        connectionManager = new ConnectionManager(outputStream);
+        connectionManager = new ConnectionManager(outputStream, this);
         parent.addToConnections(connectionManager);
 
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
@@ -141,5 +139,16 @@ public class Client extends Thread {
     @Override
     public void interrupt() {
         connectionManager.kill();
+        parent.removeFromRoutingTable(ipAdd);
+    }
+
+    @Override
+    public long lastKeepAliveMessageTime() {
+        return lastMessageTime;
+    }
+
+    @Override
+    public int keepAliveTimeout() {
+        return 60;
     }
 }

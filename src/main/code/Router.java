@@ -66,6 +66,10 @@ public class Router {
         server.printRoutingTable();
     }
 
+    public void removeFromRoutingTable(String ipAddr) {
+        server.removeFromRoutingTable(ipAddr);
+    }
+
     public void kill() {
         server.interrupt();
         for (Client client : clients) {
