@@ -37,6 +37,13 @@ public class RoutingInformationBase{
 		return LocRIB;
 	}
 
+	public void empty() {
+		AdjRIBsIn.removeAll(AdjRIBsIn);
+		LocRIB.removeAll(LocRIB);
+		AdjRIBsOut.removeAll(AdjRIBsOut);
+		routingTable = new RoutingTable();
+	}
+
 	public Route getAdvertisedRoute(String ipAddr) {
 		byte[] bytes = new byte[4];
 		int index = 0;

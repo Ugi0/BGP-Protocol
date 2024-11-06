@@ -145,8 +145,6 @@ public class Server extends Thread {
             new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress),
             RouteUpdateType.ADD)) {
 
-            //TODO handle removing routes if 
-
             synchronized(routingTable.getAdvertisedRoutes()) {
                 for (Route route : routingTable.getAdvertisedRoutes()) {
                     source.writeToStream(new Update(null, 
@@ -232,6 +230,7 @@ public class Server extends Thread {
 
     @Override
     public void interrupt() {
+        routingTable.empty();
         if (socket != null){
         try {
             socket.close();

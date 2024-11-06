@@ -98,6 +98,7 @@ public class Client extends Thread implements ConnectionContainer {
             printDebug(String.format("Client %s couldn't parse the message", getName()));
             e.printStackTrace();
         } finally{
+            parent.removeFromRoutingTable(ipAdd);
             try {
                 inputStream.close();
             } catch (IOException e) {

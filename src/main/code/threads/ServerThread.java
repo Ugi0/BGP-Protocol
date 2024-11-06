@@ -83,6 +83,7 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
 
         finally {
+            parent.parent.removeConnection(connectionManager);
             try {
                 printDebug("Server connection Closing..");
                 if (inputStream != null){

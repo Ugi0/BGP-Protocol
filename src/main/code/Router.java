@@ -41,6 +41,10 @@ public class Router {
         return this.connections;
     }
 
+    public void removeConnection(ConnectionManager connection) {
+        connections.remove(connection);
+    }
+
     private void createServerThread() {
         printDebug(String.format("Starting server thread on address %s", serverAddess));
         server = new Server(serverAddess, this);
