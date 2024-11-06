@@ -186,7 +186,7 @@ public class Server extends Thread {
 
             List<RouteInformation> removedRouteInformations = new ArrayList<>();
             for (Route r : removedRoutes) {
-                RouteInformation rf = new RouteInformation(1);
+                RouteInformation rf = new RouteInformation(r.AS_PATH.size());
                 for (Integer AS : r.AS_PATH) {
                     rf.addToPrefix(AS.byteValue());
                 }
@@ -227,14 +227,14 @@ public class Server extends Thread {
 
         List<RouteInformation> removedRouteInformations = new ArrayList<>();
         for (Route r : removedRoutes) {
-            RouteInformation rf = new RouteInformation(1);
+            RouteInformation rf = new RouteInformation(r.AS_PATH.size());
             for (Integer AS : r.AS_PATH) {
                 rf.addToPrefix(AS.byteValue());
             }
             removedRouteInformations.add(rf);
         }
 
-        handleSendingToConnections(new Update(removedRouteInformations, null, null));
+        //handleSendingToConnections(new Update(removedRouteInformations, null, null));
     }
 
     private byte[] IpAddToIntArray(String addr) {
@@ -252,6 +252,7 @@ public class Server extends Thread {
 
     @Override
     public void interrupt() {
+        printDebug(String.format("Server %s is shutting down", AS));
         routingTable.empty();
         if (socket != null){
         try {

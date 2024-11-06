@@ -98,15 +98,20 @@ public class RoutingInformationBase{
 		removeFromList(AS, AdjRIBsIn, null);
 		removeFromList(AS, AdjRIBsOut, null);
 
+		for (Route r : ans) {
+			routingTable.removeRoute(r);
+		}
+
 		//TODO if there is another route to AS in AdjRIBOut, the new best routes should be set to LocRIB
 
 		return ans;
-	}
+	} 
 
 	private void removeFromList(Integer AS, List<Route> searchList, List<Route> resultList) {
 		Iterator<Route> iter = searchList.iterator();
 		while (iter.hasNext()) {
 			Route item = iter.next();
+			if (item == null) continue;
 			if (item.AS_PATH.contains(AS)) {
 				iter.remove();
 				if (resultList != null) resultList.add(item);

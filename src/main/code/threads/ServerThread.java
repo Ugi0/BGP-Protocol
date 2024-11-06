@@ -21,7 +21,7 @@ public class ServerThread extends Thread implements ConnectionContainer {
     Socket socket=null;
     ConnectionManager connectionManager;
 
-    long lastMessageTime = 0;
+    long lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
 
     Server parent;
 
@@ -83,7 +83,6 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
 
         finally {
-            parent.parent.removeConnection(connectionManager);
             try {
                 printDebug("Server connection Closing..");
                 if (inputStream != null){
@@ -128,5 +127,10 @@ public class ServerThread extends Thread implements ConnectionContainer {
     @Override
     public int keepAliveTimeout() {
         return 60;
+    }
+
+    @Override
+    public void handleConnectionDeath() {
+        
     }
 }

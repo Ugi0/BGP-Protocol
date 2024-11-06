@@ -27,7 +27,7 @@ public class Client extends Thread implements ConnectionContainer {
     OutputStream outputStream = null;
     ConnectionManager connectionManager;
 
-    long lastMessageTime = 0;
+    long lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
 
     Router parent;
 
@@ -98,7 +98,6 @@ public class Client extends Thread implements ConnectionContainer {
             printDebug(String.format("Client %s couldn't parse the message", getName()));
             e.printStackTrace();
         } finally{
-            parent.removeFromRoutingTable(ipAdd);
             try {
                 inputStream.close();
             } catch (IOException e) {
@@ -110,7 +109,7 @@ public class Client extends Thread implements ConnectionContainer {
                 e.printStackTrace();
             }
             printDebug(String.format("Client %s connection Closed", ownAS));
-
+            interrupt();
         }
 
     }
@@ -136,8 +135,8 @@ public class Client extends Thread implements ConnectionContainer {
 
     @Override
     public void interrupt() {
-        connectionManager.kill();
         parent.removeFromRoutingTable(ipAdd);
+        connectionManager.kill();
     }
 
     @Override
@@ -148,5 +147,11 @@ public class Client extends Thread implements ConnectionContainer {
     @Override
     public int keepAliveTimeout() {
         return 60;
+    }
+
+    @Override
+    public void handleConnectionDeath() {
+        printDebug(String.format("Client %s is shutting down", ownAS));
+        interrupt();
     }
 }

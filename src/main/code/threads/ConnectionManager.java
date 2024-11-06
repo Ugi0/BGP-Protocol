@@ -55,6 +55,7 @@ public class ConnectionManager implements Runnable {
     public void run() {
         if (killed) return;
         if (parent.lastKeepAliveMessageTime() + parent.keepAliveTimeout() < TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis())) {
+            printDebug("Timed out");
             kill();
         }
         try {
@@ -85,12 +86,14 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
-            //kill();
+            kill();
         }
     }
 
     public void kill() {
+        if (killed) return;
         scheduler.shutdown();
         killed = true;
+        parent.handleConnectionDeath();
     }
 }
