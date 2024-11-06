@@ -86,6 +86,10 @@ public class Update extends ControlMessage {
         }
     }
 
+    public List<RouteInformation> getWithdrawnRoutes() {
+        return this.withdrawnRoutes;
+    }
+
     public Update addToAS(byte AS) {
         List<Integer> path = getAS();
         path.add(Integer.valueOf(AS));
@@ -107,7 +111,11 @@ public class Update extends ControlMessage {
             prefix.add(Integer.valueOf(value));
         }
 
-        public List<Byte>toBytes() {
+        public List<Integer> getPrefixes() {
+            return this.prefix;
+        }
+
+        public List<Byte> toBytes() {
             List<Byte> bytes = new ArrayList<>();
             if (length != 0) {
                 bytes.add(Integer.valueOf(length).byteValue());

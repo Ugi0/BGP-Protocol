@@ -10,7 +10,6 @@ import main.code.threads.ConnectionManager;
 import main.code.threads.ServerThread;
 import routing.Route;
 import routing.RoutingInformationBase;
-import routing.RoutingInformationBase.RouteUpdateType;
 import messages.Keepalive;
 import messages.Message;
 import messages.IpPacket;
@@ -19,6 +18,7 @@ import messages.Open;
 import messages.Update;
 import messages.Update.AttributeTypes;
 import messages.Update.PathAttribute;
+import messages.Update.RouteInformation;
 
 import java.util.List;
 
@@ -141,9 +141,8 @@ public class Server extends Thread {
      */
     public void handleRoutingTableChange(Open message, ConnectionManager source) {
         byte[] connectedAddress = new byte[]{127,0,(byte) message.getAS(),0};
-        if(routingTable.updateRoute(
-            new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress),
-            RouteUpdateType.ADD)) {
+        if(routingTable.addRoute(
+            new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress))) {
 
             synchronized(routingTable.getAdvertisedRoutes()) {
                 for (Route route : routingTable.getAdvertisedRoutes()) {
@@ -182,9 +181,23 @@ public class Server extends Thread {
      * @param source
      */
     private void handleRoutingTableChange(Update message) {
-        if(routingTable.updateRoute(
-            new Route(message.getSource(), message.getAS(), message.getNextHop()),
-            RouteUpdateType.ADD)) {
+        for (RouteInformation route : message.getWithdrawnRoutes()) {
+            List<Route> removedRoutes = routingTable.removeRoute(route.getPrefixes().get(0));
+
+            List<RouteInformation> removedRouteInformations = new ArrayList<>();
+            for (Route r : removedRoutes) {
+                RouteInformation rf = new RouteInformation(1);
+                for (Integer AS : r.AS_PATH) {
+                    rf.addToPrefix(AS.byteValue());
+                }
+                removedRouteInformations.add(rf);
+            }
+
+            handleSendingToConnections(new Update(removedRouteInformations, null, null));
+        }
+
+        if(routingTable.addRoute(
+            new Route(message.getSource(), message.getAS(), message.getNextHop()))) {
 
             handleSendingToConnections(message.addToAS(AS).setNextHop(socketAddress));
         }
@@ -209,10 +222,19 @@ public class Server extends Thread {
     }
 
     public void removeFromRoutingTable(String ipAddr) {
-        Route removedRoute = routingTable.getAdvertisedRoute(ipAddr);
-        routingTable.updateRoute(removedRoute, RouteUpdateType.REMOVE);
-        //TODO populate the removedRoutes here
-        handleSendingToConnections(new Update(null, null, null));
+        Integer removedAS = Integer.valueOf(routingTable.getAS(ipAddr));
+        List<Route> removedRoutes = routingTable.removeRoute(removedAS);
+
+        List<RouteInformation> removedRouteInformations = new ArrayList<>();
+        for (Route r : removedRoutes) {
+            RouteInformation rf = new RouteInformation(1);
+            for (Integer AS : r.AS_PATH) {
+                rf.addToPrefix(AS.byteValue());
+            }
+            removedRouteInformations.add(rf);
+        }
+
+        handleSendingToConnections(new Update(removedRouteInformations, null, null));
     }
 
     private byte[] IpAddToIntArray(String addr) {
@@ -241,10 +263,7 @@ public class Server extends Thread {
             serverSocket.close();
         } catch (IOException ignored) {}
         super.interrupt();
-        }else{
-            printDebug("socket already null");
         }
-        
     }
 
 }

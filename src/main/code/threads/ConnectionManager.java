@@ -85,7 +85,7 @@ public class ConnectionManager implements Runnable {
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
-            kill();
+            //kill();
         }
     }
 

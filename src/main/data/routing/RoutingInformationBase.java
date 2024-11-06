@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.util.Iterator;
 
 public class RoutingInformationBase{
 	int ownASN;
@@ -56,6 +57,10 @@ public class RoutingInformationBase{
 		return null;
 	}
 
+	public String getAS(String ipAddr) {
+		return ipAddr.split("\\.")[2];
+	}
+
 	public void print() {
 		System.out.println(String.format("ownASN: %s", ownASN));
 		//System.out.println(String.format("AdjRIBsIn: %s", AdjRIBsIn.toString()));
@@ -68,7 +73,7 @@ public class RoutingInformationBase{
 		return routingTable;
 	}
 	
-	private boolean addRoute(Route route) {
+	public boolean addRoute(Route route) {
 		boolean tableChanged;
 		//printDebug(String.format("%s %s", route.destinationAddress[2], ownASN));
 		if (route.destinationAddress.length == 0 || route.destinationAddress[2] == ownASN) return false;
@@ -86,33 +91,27 @@ public class RoutingInformationBase{
 		return tableChanged;
 	}
 	
-	private boolean removeRoute(Route route) {
-		boolean tableChanged;
-		if (AdjRIBsIn.contains(route)){
-			AdjRIBsIn.remove(route);
-		}
-		if (LocRIB.contains(route)){
-			LocRIB.remove(route);
-		}
-		if (AdjRIBsOut.contains(route)) {
-			AdjRIBsOut.remove(route);
-		}
-		tableChanged = routingTable.removeRoute(route);
-		return tableChanged;
-	}
-	
-	public boolean updateRoute(Route route, RouteUpdateType type) {
-		if (type.equals(RouteUpdateType.REMOVE)) {
-			return removeRoute(route);
-		}
-		else if (type.equals(RouteUpdateType.ADD)){
-			return addRoute(route);
-		}
-		return false;
+	public List<Route> removeRoute(Integer AS) {
+		ArrayList<Route> ans = new ArrayList<>();
+
+		removeFromList(AS, LocRIB, ans);
+		removeFromList(AS, AdjRIBsIn, null);
+		removeFromList(AS, AdjRIBsOut, null);
+
+		//TODO if there is another route to AS in AdjRIBOut, the new best routes should be set to LocRIB
+
+		return ans;
 	}
 
-	public enum RouteUpdateType {
-		ADD, REMOVE
+	private void removeFromList(Integer AS, List<Route> searchList, List<Route> resultList) {
+		Iterator<Route> iter = searchList.iterator();
+		while (iter.hasNext()) {
+			Route item = iter.next();
+			if (item.AS_PATH.contains(AS)) {
+				iter.remove();
+				if (resultList != null) resultList.add(item);
+			}
+		}
 	}
 	
 	private boolean filter(Route route) {
