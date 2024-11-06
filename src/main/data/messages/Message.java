@@ -1,55 +1,18 @@
 package messages;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public abstract class Message {
-    public static final int HEADER_SIZE = 19;
-    public static final int HEADER_MARKER_SIZE = 16;
-    public static final int MAX_MESSAGE_LENGTH = 1500;
-    public static final int MIN_MESSAGE_LENGTH = 19;
-
-    //Message types
-    protected static final int TYPE_OPEN = 1;
-    protected static final int TYPE_UPDATE = 2;
-    protected static final int TYPE_NOTIFICATION = 3;
-    protected static final int TYPE_KEEPALIVE = 4;
-    protected static final int TYPE_ROUTEREFRESH = 5;
-
     protected byte[] message;
-    protected int type;
-    protected int length;
-    private int index;
+    protected int index;
 
-    public Message() {
-    }
-
+    public Message() {}
     public Message(byte[] message) {
         this.message = message;
-
-        //The header is already checked
-        /*for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
-            if (getValue(1) != 255) {
-                throw new Error();
-            }
-        }*/
-        index = HEADER_MARKER_SIZE;
-        length = getValue(2);
-        type = getValue(1);
-
-        byte[] messageCopy = new byte[length];
-        System.arraycopy(message, 0, messageCopy, 0, length);
-        message = messageCopy;
     }
-
     public static Class<? extends Message> classFromMessage(byte[] message) {
-        //The header is already checked
-        /*for (int i = 0; i<HEADER_MARKER_SIZE; i++) {
-            if ((message[i] & 0xFF) != 255) {
-                throw new Error();
-            }
-        }*/
-        int type = message[HEADER_MARKER_SIZE+2];
+
+        int type = message[ControlMessage.HEADER_MARKER_SIZE+2];
 
         switch (type) {
             case 1:
@@ -61,13 +24,15 @@ public abstract class Message {
             case 4:
                 return Keepalive.class;
             default:
-                return null;
+                break;
         }
+        if (message[0] == (IpPacket.DEFAULT_VERSION << 4 | IpPacket.DEFAULT_IHL) && message[1] == (IpPacket.DEFAULT_DSCP << 4 | IpPacket.DEFAULT_ECN)) {
+            return IpPacket.class;
+        }
+        return null;
     }
-
-    protected int getCurrentIndex() {
-        return index;
-    }
+    public abstract int getLength();
+    public abstract byte[] toBytes();
 
     /**
      * Get next {@code octects} bytes from the message and combine those to a single int.
@@ -93,27 +58,6 @@ public abstract class Message {
         index += octects;
         return bytes;
     }
-
-    public int getLength() {
-        return this.length;
-    }
-
-    /**
-     * Change the header of the message to bytes
-     * @return
-     */
-    private byte[] headerToBytes() {
-        byte[] bytes = new byte[HEADER_SIZE];
-        for (int i = 0; i< HEADER_MARKER_SIZE; i++) {
-            bytes[i] = Integer.valueOf(255).byteValue();
-        }
-        bytes[16] = (byte) (length << 8);
-        bytes[17] = (byte) length;
-        bytes[18] = (byte) classToType(getClass());
-
-        return bytes;
-    }
-
     /**
      * Add the given {@code value} to given {@code bytes} List, filling with zeros until {@code octects} bytes are added.
      * @param value
@@ -123,47 +67,6 @@ public abstract class Message {
     protected void addToByteList(int value, int octets, List<Byte> bytes) {
         for (int i = 0; i < octets; i++) {
             bytes.add(Integer.valueOf(value >> 8 * (octets-i-1)).byteValue());
-        }
-    }
-
-    /**
-     * Change the whole message to bytes
-     * @return
-     */
-    public byte[] toBytes() { 
-        byte[] contentBytes = contentToBytes();
-        length = contentBytes.length + HEADER_SIZE;
-        byte[] headerBytes = headerToBytes();
-        
-        byte[] combined = new byte[headerBytes.length + contentBytes.length];
-        ByteBuffer buff = ByteBuffer.wrap(combined);
-        buff.put(headerBytes);
-        buff.put(contentBytes);
-
-        return buff.array();
-    }
-
-    /**
-     * Change the part of the message after the header to bytes
-     * <p>
-     * DO NOT USE THIS DIRECTLY USE {@link #toBytes()} INSTEAD
-     * </p>
-     * @return
-     */
-    abstract byte[] contentToBytes();
-
-    private int classToType(Class<? extends Message> clazz) {
-        return ClassType.valueOf(clazz.getSimpleName()).num;
-    }
-
-    private enum ClassType {
-        Open(1), Update(2),
-        Notification(3), Keepalive(4),
-        RouterRefresh(5);
-
-        int num;
-        ClassType(int num) {
-            this.num = num;
         }
     }
 }

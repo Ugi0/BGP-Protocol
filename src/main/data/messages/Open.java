@@ -3,7 +3,7 @@ package messages;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Open extends Message {
+public class Open extends ControlMessage {
 
     /*
      * 0                   1                   2                   3
@@ -25,7 +25,6 @@ public class Open extends Message {
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
      */
 
-    private static final int OPEN_MESSAGE_SIZE_NO_PARM = 10; 
     private static final int DEFAULT_BGP_VERSION = 4;
     private static final int VERSION_LENGTH = 1;
     private static final int MYAS_LENGTH = 2;

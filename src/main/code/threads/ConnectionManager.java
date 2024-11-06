@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import messages.ControlMessage;
 import messages.Message;
 
 public class ConnectionManager implements Runnable {
@@ -17,14 +18,24 @@ public class ConnectionManager implements Runnable {
     private OutputStream stream;
     private byte[] keepaliveMessage;
     private int timeout;
+    private String address;
 
     private boolean killed = false;
 
     private ConnectionContainer parent;
 
-    public ConnectionManager(OutputStream stream, ConnectionContainer parent) {
+    public ConnectionManager(OutputStream stream, ConnectionContainer parent, String ipAddress) {
         this.stream = stream;
         this.parent = parent;
+        address = ipAddress;
+    }
+
+    public ConnectionManager(OutputStream stream, ConnectionContainer parent) {
+        this(stream, parent, null);
+    }
+
+    public String getAddress() {
+        return this.address;
     }
 
     /**
@@ -33,7 +44,7 @@ public class ConnectionManager implements Runnable {
      * @param keepaliveMessage
      * @param timeout
      */
-    public void setKeepAliveMessage(Message keepaliveMessage, int timeout) {
+    public void setKeepAliveMessage(ControlMessage keepaliveMessage, int timeout) {
         this.timeout = timeout;
         this.keepaliveMessage = keepaliveMessage.toBytes();
 

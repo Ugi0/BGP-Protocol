@@ -1,6 +1,6 @@
 package messages;
 
-public class Notification extends Message {
+public class Notification extends ControlMessage {
 
     /*
      * 0                   1                   2                   3

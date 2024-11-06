@@ -29,6 +29,10 @@ public class Router {
         createClientThreads();
     }
 
+    public String getRouterAddress() {
+        return this.serverAddess;
+    }
+
     public void addToConnections(ConnectionManager connection) {
         connections.add(connection);
     }

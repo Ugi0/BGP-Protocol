@@ -2,8 +2,6 @@ package routing;
 
 import java.util.Arrays;
 
-import static main.Main.printDebug;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
@@ -58,11 +56,15 @@ public class RoutingInformationBase{
 		//System.out.println(String.format("AdjRIBsOut: %s", AdjRIBsOut.toString()));
 		routingTable.print();
 	}
+
+	public RoutingTable getTable() {
+		return routingTable;
+	}
 	
 	private boolean addRoute(Route route) {
 		boolean tableChanged;
 		//printDebug(String.format("%s %s", route.destinationAddress[2], ownASN));
-		if (route.destinationAddress[2] == ownASN) return false;
+		if (route.destinationAddress.length == 0 || route.destinationAddress[2] == ownASN) return false;
  		for (int ASN : route.AS_PATH) {
 			if (ASN == ownASN) {
 				return false;

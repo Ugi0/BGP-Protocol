@@ -11,6 +11,8 @@ import java.util.Scanner;
 import java.util.stream.Stream; 
 
 import main.code.Router;
+import main.code.Visualizer;
+import messages.IpPacket;
 
 public class Main {
     public static boolean debug = true;
@@ -67,6 +69,17 @@ public class Main {
         command = command.toLowerCase();
         String[] stringParts = command.split(" ");
         switch (stringParts[0]) {
+            case "visualize": 
+                //DEBUG
+                System.out.println("hashmap: ");
+                for (HashMap.Entry<Integer, Integer[]> entry : connections.entrySet()) {
+                    Integer key = entry.getKey();
+                    Integer[] valueArray = entry.getValue();
+                    System.out.println("Key: " + key + ", Value: " + Arrays.toString(valueArray));
+                }
+
+                new Visualizer(connections);
+                break;
             case "get":
                 if (stringParts.length == 1) return;
                 switch (stringParts[1]) {
@@ -146,6 +159,30 @@ public class Main {
                     break;
                 }
 
+            case "send":
+                String message = stringParts[1];
+                byte[] source = new byte[4];
+                byte[] destination = new byte[4];
+                String sourceString = stringParts[2];
+                String destinationString = stringParts[3];
+
+                int index = 0;
+                for (String s : sourceString.split("\\.")) {
+                    source[index++] = Integer.valueOf(s).byteValue();
+                }
+                index = 0;
+                for (String s : destinationString.split("\\.")) {
+                    destination[index++] = Integer.valueOf(s).byteValue();
+                }
+
+                for (Router r : routers) {
+                    if (r.getRouterAddress().equals(sourceString)) {
+                        r.getServer().handleMessage(
+                            new IpPacket(source, destination, message.getBytes()), 
+                            null);
+                    }
+                }
+                break;
         
             default:
                 printDebug("Invalid command. Type \"help\" for the list of commands");
@@ -187,6 +224,7 @@ public class Main {
                 line = reader.readLine();
 			}
 			reader.close();
+
         } catch (IOException e) {
             printDebug("Failed to parse config");
             e.printStackTrace();

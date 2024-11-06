@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+import messages.ControlMessage;
 import messages.Message;
 
 import java.io.InputStream;
@@ -48,13 +49,13 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
         try {
             while (true) {
-                byte[] buff = new byte[Message.MAX_MESSAGE_LENGTH];
+                byte[] buff = new byte[ControlMessage.MAX_MESSAGE_LENGTH];
                 inputStream.read(buff);
                 int index = 0;
                 
                 while (true) {
-                    byte[] newArray = new byte[Message.MAX_MESSAGE_LENGTH];
-                    System.arraycopy(buff, index, newArray, 0, Message.MAX_MESSAGE_LENGTH - index);
+                    byte[] newArray = new byte[ControlMessage.MAX_MESSAGE_LENGTH];
+                    System.arraycopy(buff, index, newArray, 0, ControlMessage.MAX_MESSAGE_LENGTH - index);
 
                     Class<? extends Message> clazz = Message.classFromMessage(newArray);
                     if (clazz == null) break;
@@ -81,7 +82,7 @@ public class ServerThread extends Thread implements ConnectionContainer {
         }
 
 
-        finally {    
+        finally {
             try {
                 printDebug("Server connection Closing..");
                 if (inputStream != null){
