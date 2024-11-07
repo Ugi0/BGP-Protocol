@@ -2,6 +2,8 @@ package main.code.threads;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.concurrent.TimeUnit;
 
 import messages.ControlMessage;
 import messages.Message;
@@ -14,19 +16,23 @@ import main.code.Server;
 
 import static main.Main.*;
 
-public class ServerThread extends Thread {  
+public class ServerThread extends Thread implements ConnectionContainer {  
     InputStream inputStream = null;
     OutputStream outputStream = null;
     Socket socket=null;
     ConnectionManager connectionManager;
 
+    long lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+
     Server parent;
+
+    public STATE state = STATE.IDLE;
 
     public ServerThread(Socket s, Server parent) {
         this.parent = parent;
         socket = s;
         try {
-            s.setSoTimeout(60000); //milliseconds, timeouts after 1min
+            s.setSoTimeout(0);
         }catch (IOException e){
             printDebug(("server thread timed out"));
         }
@@ -41,7 +47,8 @@ public class ServerThread extends Thread {
             printDebug("IO error in server thread");
         }
 
-        connectionManager = new ConnectionManager(outputStream);
+        connectionManager = new ConnectionManager(outputStream, this);
+        parent.parent.addToConnections(connectionManager);
 
         try {
             while (true) {
@@ -60,16 +67,15 @@ public class ServerThread extends Thread {
 
                     index += message.getLength();
 
-                    printDebug(String.format("%s client read %s in the stream", parent.AS, message));
-
-                    parent.handleMessage(message, connectionManager);
+                    printDebug(String.format("%s server read %s in the stream", parent.AS, message));
+                    parent.handleMessage(message, this);
                 }
+                setLastKeepMessageTime();
             }
+        } catch(NullPointerException | SocketException e){
+            printDebug(String.format("Server %s Closed", getName()));
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
-            e.printStackTrace();
-        } catch(NullPointerException e){
-            printDebug(String.format("Server %s Closed", getName()));
             e.printStackTrace();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
             printDebug(String.format("Server %s couldn't parse the message", getName()));
@@ -77,7 +83,7 @@ public class ServerThread extends Thread {
         }
 
 
-        finally {    
+        finally {
             try {
                 printDebug("Server connection Closing..");
                 if (inputStream != null){
@@ -101,16 +107,52 @@ public class ServerThread extends Thread {
         }//end finally
     }
 
-    @Override
-    public void interrupt() {
-        connectionManager.kill();
-    }
-
     public ConnectionManager getConnectionManager() {
         return connectionManager;
     }
 
     public byte[] getSocketAddress() {
         return socket.getInetAddress().getAddress();
+    }
+
+    @Override
+    public long lastKeepAliveMessageTime() {
+        return lastMessageTime;
+    }
+
+    @Override
+    public void setLastKeepMessageTime() {
+        lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+    }
+
+    @Override
+    public int keepAliveTimeout() {
+        return 60;
+    }
+
+    @Override
+    public void shutdown() {
+        printDebug(String.format("%s is shutting down", getIdentifier()));
+        connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
+    }
+
+    @Override
+    public void informDisconnect() {}
+
+    @Override
+    public STATE getConnectionState() {
+        return state;
+    }
+
+    @Override
+    public void setState(STATE state) {
+        this.state = state;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return String.format("Server thread %s", parent.AS);
     }
 }

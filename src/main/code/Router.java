@@ -11,7 +11,7 @@ import main.code.threads.ConnectionManager;
 public class Router {
     private String serverAddess;
     private Server server;
-    private Integer ownAS;
+    public final Integer ownAS;
     private String[] clientAddresses;
     private Client[] clients;
 
@@ -39,6 +39,10 @@ public class Router {
 
     public List<ConnectionManager> getConnections() {
         return this.connections;
+    }
+
+    public void removeConnection(ConnectionManager connection) {
+        connections.remove(connection);
     }
 
     private void createServerThread() {
@@ -70,10 +74,30 @@ public class Router {
         server.printRoutingTable();
     }
 
-    public void kill() {
-        server.interrupt();
+    public void printStates() {
+        System.out.println(String.format("Router %s", ownAS));
+        server.printStates();
+        System.out.println("Client connections:");
         for (Client client : clients) {
-            client.interrupt();
+            System.out.println(client.state);
+        }
+    }
+
+    public void removeFromRoutingTable(String ipAddr) {
+        server.removeFromRoutingTable(ipAddr);
+    }
+
+    public void kill() {
+        server.shutdown();
+        for (Client client : clients) {
+            client.shutdown();
+        }
+    }
+
+    public void killGracefully() {
+        server.killGracefully();
+        for (Client client : clients) {
+            client.killGracefully();
         }
     }
 

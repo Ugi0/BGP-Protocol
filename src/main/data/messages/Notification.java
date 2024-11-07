@@ -1,5 +1,8 @@
 package messages;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Notification extends ControlMessage {
 
     /*
@@ -57,35 +60,71 @@ public class Notification extends ControlMessage {
 
     private int error;
     private int errorSub;
-    private int data;
+    private byte[] data;
 
     public Notification(byte[] message) {
         super(message);
-        //TODO Auto-generated constructor stub
+        
+        error = getValue(1);
+        errorSub = getValue(1);
+
+        int dataLength = getValue(1);
+        data = getBytes(dataLength);
+
     }
 
-    public Notification(int error, int errorSub, int data){ //TODO specify errors somewhere
+    public Notification(int error, int errorSub, byte[] data){
         this.error = error;
         this.errorSub = errorSub;
-        this.data = data;
+        if (this.data == null) { 
+            data = new byte[0];
+        } else {
+            this.data = data;
+        }
         type = TYPE_NOTIFICATION;
 
-        message = toBytes();         
+        message = toBytes();      
     };
+
+    public int getError() {
+        return this.error;
+    }
 
     @Override
     byte[] contentToBytes() {
-        int significantBits = 32 - Integer.numberOfLeadingZeros(data);
-        int dataOctets = (significantBits + 7) / 8;
-        byte[] notificationMessage = new byte[2 + dataOctets];
-        notificationMessage[0] = (byte) error;
-        notificationMessage[1] = (byte) errorSub;
-        if (data != 0){
-            for (int i = 2; i < 2 + dataOctets; i++) {
-                notificationMessage[i] = (byte) ((data >> (8 * (dataOctets - 1 - i))) & 0xFF);
-            }
+        List<Byte> bytes = new ArrayList<>();
+
+        if (data == null) data = new byte[0];
+
+        addToByteList(error, 1, bytes);
+        addToByteList(errorSub, 1, bytes);
+        addToByteList(data.length, 1, bytes);
+
+        for (byte b : data) {
+            bytes.add(b);
         }
-        return notificationMessage;
+
+        byte[] byteArr = new byte[bytes.size()];
+        for (int i = 0; i < bytes.size(); i++) {
+            byteArr[i] = bytes.get(i);
+        }
+        return byteArr;
+    }
+
+    public static enum ErrorCode {
+        HeaderError(1), OpenError(2),
+        UpdateError(3), TimerExpired(4),
+        StateMachineError(5), Cease(6);
+
+        int value;
+
+        ErrorCode(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return this.value;
+        }
     }
     
 }

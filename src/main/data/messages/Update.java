@@ -39,7 +39,7 @@ public class Update extends ControlMessage {
         if (pathAttributes == null) pathAttributes = new ArrayList<>();
         if (networkReachability == null) networkReachability = new ArrayList<>(); 
 
-        withdrawnRoutLen = removedRoutes.stream().collect(Collectors.summingInt(e -> e.length));
+        withdrawnRoutLen = removedRoutes.stream().collect(Collectors.summingInt(e -> 1 + e.length));
         withdrawnRoutes = removedRoutes;
 
         totPathAttrLen = pathAttributes.stream().collect(Collectors.summingInt(e -> 3 + e.getLength()));
@@ -63,7 +63,7 @@ public class Update extends ControlMessage {
                 route.addToPrefix((byte) getValue(1));
             }
             withdrawnRoutes.add(route);
-            index += length;
+            index += length + 1;
         }
         totPathAttrLen = getValue(2);
         index = 0;
@@ -82,8 +82,12 @@ public class Update extends ControlMessage {
                 route.addToPrefix((byte) getValue(1));
             }
             networkReachabilityInform.add(route);
-            index += length;
+            index += length + 1;
         }
+    }
+
+    public List<RouteInformation> getWithdrawnRoutes() {
+        return this.withdrawnRoutes;
     }
 
     public Update addToAS(byte AS) {
@@ -107,7 +111,11 @@ public class Update extends ControlMessage {
             prefix.add(Integer.valueOf(value));
         }
 
-        public List<Byte>toBytes() {
+        public List<Integer> getPrefixes() {
+            return this.prefix;
+        }
+
+        public List<Byte> toBytes() {
             List<Byte> bytes = new ArrayList<>();
             if (length != 0) {
                 bytes.add(Integer.valueOf(length).byteValue());
@@ -217,7 +225,7 @@ public class Update extends ControlMessage {
     @Override
     byte[] contentToBytes() {
         List<Byte> bytes = new ArrayList<>();
-        addToByteList(Integer.valueOf(withdrawnRoutes.stream().mapToInt(e -> e.length).sum()), WithdrawnRoutesLength, bytes);
+        addToByteList(Integer.valueOf(withdrawnRoutes.stream().mapToInt(e -> 1 + e.length).sum()), WithdrawnRoutesLength, bytes);
         for (RouteInformation withDrawnRoute : withdrawnRoutes) {
             bytes.addAll(withDrawnRoute.toBytes());
         }

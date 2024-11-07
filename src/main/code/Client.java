@@ -6,9 +6,11 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
+import main.code.threads.ConnectionContainer;
 import main.code.threads.ConnectionManager;
 import messages.Keepalive;
 import messages.Message;
+import messages.Notification;
 import messages.ControlMessage;
 import messages.Open;
 
@@ -18,7 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import static main.Main.*;
 
-public class Client extends Thread {
+public class Client extends Thread implements ConnectionContainer {
     private String ipAdd;
     private Integer ownAS;
     Socket socket = null;
@@ -26,7 +28,11 @@ public class Client extends Thread {
     OutputStream outputStream = null;
     ConnectionManager connectionManager;
 
+    long lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+
     Router parent;
+
+    public STATE state = STATE.IDLE;
 
     public Client(String ipAdd, Integer AS, Router parent) {
         this.parent = parent;
@@ -35,11 +41,6 @@ public class Client extends Thread {
     }
 
     public void run() {
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         try {
             InetAddress addr = InetAddress.getByName(ipAdd);
@@ -62,11 +63,12 @@ public class Client extends Thread {
         }
 
         //Start a timer thread that will send a keepalive message every 20 seconds
-        connectionManager = new ConnectionManager(outputStream, ipAdd);
+        connectionManager = new ConnectionManager(outputStream, this, ipAdd);
         parent.addToConnections(connectionManager);
 
         Open openMessage = new Open(ownAS, 20, 0, 0, 0);
         connectionManager.writeToStream(openMessage);
+        state = STATE.OPEN_SENT;
 
         try {
             while (true) {
@@ -85,7 +87,7 @@ public class Client extends Thread {
 
                     index += message.getLength();
 
-                    printDebug(String.format("%s client read %s in the stream", ownAS, message));
+                    printDebug(String.format("%s read %s in the stream", getIdentifier(), message.getClass().getSimpleName()));
 
                     handleMessage(message);
                 }
@@ -111,7 +113,7 @@ public class Client extends Thread {
                 e.printStackTrace();
             }
             printDebug(String.format("Client %s connection Closed", ownAS));
-
+            shutdown();
         }
 
     }
@@ -121,22 +123,85 @@ public class Client extends Thread {
      * @param received
      */
     private void handleMessage(Message received) {
-        //Client shouldn't receive anything else than keepalive messages
-        if (received instanceof Open) {
+        setLastKeepMessageTime();
+        if (received instanceof Keepalive) {
+            if (state == STATE.OPEN_SENT) state = STATE.OPEN_CONFIRM;
+        } else if (received instanceof Open) {
+            if (state != STATE.OPEN_CONFIRM) return;
             Open message = (Open) received;
             
             connectionManager.setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
             connectionManager.writeToStream(new Keepalive());
 
-            parent.getServer().handleRoutingTableChange(message, connectionManager);
+            state = STATE.ESTABLISHED;
+
+            parent.getServer().handleRoutingTableChange(message, this);
+        } else if (received instanceof Notification) {
+            Notification message = (Notification) received;
+            if (message.getError() == Notification.ErrorCode.Cease.getValue()) {
+                connectionManager.kill();
+
+                parent.removeFromRoutingTable(ipAdd);
+            }
         } else {
-            parent.getServer().handleMessage(received, connectionManager);
+            if (state != STATE.ESTABLISHED) return;
+            parent.getServer().handleMessage(received, this);
         }
     }
 
     @Override
-    public void interrupt() {
+    public long lastKeepAliveMessageTime() {
+        return lastMessageTime;
+    }
+
+    @Override
+    public void setLastKeepMessageTime() {
+        lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+    }
+
+    @Override
+    public int keepAliveTimeout() {
+        return 60;
+    }
+
+    public String getIdentifier() {
+        return String.format("Client %s connected to %s", ownAS, ipAdd.split("\\.")[2]);
+    }
+
+    @Override
+    public void shutdown() {
+        printDebug(String.format("%s is shutting down", getIdentifier()));
         connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
+    }
+
+    @Override
+    public void informDisconnect() {
+        parent.getServer().removeFromRoutingTable(ipAdd);
+    }
+
+    public void killGracefully() {
+        printDebug(String.format("%s is shutting down gracefully", getIdentifier()));
+        connectionManager.writeToStream(new Notification(Notification.ErrorCode.Cease.getValue(), 0, null));
+        connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
+    }
+
+    @Override
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
+    }
+
+    @Override
+    public STATE getConnectionState() {
+        return state;
+    }
+
+    @Override
+    public void setState(STATE state) {
+        this.state = state;
     }
 }
