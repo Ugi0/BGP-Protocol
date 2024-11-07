@@ -6,8 +6,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
+import main.code.threads.ConnectionContainer;
 import main.code.threads.ConnectionManager;
 import main.code.threads.ServerThread;
+import main.code.threads.ConnectionContainer.STATE;
 import routing.Route;
 import routing.RoutingInformationBase;
 import messages.Keepalive;
@@ -73,6 +75,7 @@ public class Server extends Thread {
                 printDebug("connection Established");
     
                 ServerThread st = new ServerThread(socket, this);
+                connections.add(st);
                 st.start();
 
             } catch(SocketException e){
@@ -93,22 +96,35 @@ public class Server extends Thread {
      * @param received
      * @param source
      */
-    public void handleMessage(Message received, ConnectionManager source) {
-        if (received instanceof Open) {
+    public void handleMessage(Message received, ConnectionContainer source) {
+        if (received instanceof Keepalive) {
+            if (source.getConnectionState() == STATE.OPEN_SENT) source.setState(STATE.ESTABLISHED);
+        } else if (received instanceof Open) {
+            if (source.getConnectionState() != STATE.IDLE) return;
             Open message = (Open) received;
             
-            source.setKeepAliveMessage(new Keepalive(), message.getHoldTime());
+            source.getConnectionManager().setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
-            source.writeToStream(new Open(AS, 20, 0, 0, 0));
+            source.getConnectionManager().writeToStream(new Keepalive());
+            source.getConnectionManager().writeToStream(new Open(AS, 20, 0, 0, 0));
+
+            source.setState(STATE.OPEN_SENT);
 
             handleRoutingTableChange(message, source);
 
-        } else if (received instanceof Update) {
-            handleRoutingTableChange((Update) received);
         } else if (received instanceof Notification) {
-            //Some error happened
-            //Either close connection or resend 
+            Notification message = (Notification) received;
+
+            if (message.getError() == Notification.ErrorCode.Cease.getValue()) {
+                source.shutdown();
+            }
+        } else if (received instanceof Update) {
+            if (source.getConnectionState() != STATE.ESTABLISHED) return;
+
+            handleRoutingTableChange((Update) received);
         } else if (received instanceof IpPacket) {
+            if (source.getConnectionState() != STATE.ESTABLISHED) return;
+
             IpPacket message = (IpPacket) received;
 
             if (message.getDestination().equals(parent.getRouterAddress())) {
@@ -139,14 +155,14 @@ public class Server extends Thread {
      * @param message
      * @param source
      */
-    public void handleRoutingTableChange(Open message, ConnectionManager source) {
+    public void handleRoutingTableChange(Open message, ConnectionContainer source) {
         byte[] connectedAddress = new byte[]{127,0,(byte) message.getAS(),0};
         if(routingTable.addRoute(
             new Route(connectedAddress, new ArrayList<>(Arrays.asList(message.getAS())), connectedAddress))) {
 
             synchronized(routingTable.getAdvertisedRoutes()) {
                 for (Route route : routingTable.getAdvertisedRoutes()) {
-                    source.writeToStream(new Update(null, 
+                    source.getConnectionManager().writeToStream(new Update(null, 
                         new ArrayList<>(Arrays.asList(
                             new PathAttribute(AttributeTypes.AS_Path.getValue(), route.AS_PATH.size())
                                 .setValue(route.AS_PATH.stream().collect(() -> new ByteArrayOutputStream(), (baos, i) -> baos.write((byte) i.intValue()), (baos1, baos2) -> {}).toByteArray()),
@@ -234,7 +250,7 @@ public class Server extends Thread {
             removedRouteInformations.add(rf);
         }
 
-        //handleSendingToConnections(new Update(removedRouteInformations, null, null));
+        handleSendingToConnections(new Update(removedRouteInformations, null, null));
     }
 
     private byte[] IpAddToIntArray(String addr) {
@@ -250,20 +266,33 @@ public class Server extends Thread {
         routingTable.print();
     }
 
-    @Override
-    public void interrupt() {
+    public void printStates() {
+        System.out.println("Server connections:");
+        for (ServerThread connection : connections) {
+            System.out.println(connection.state);
+        }
+    }
+
+    public void shutdown() {
         printDebug(String.format("Server %s is shutting down", AS));
         routingTable.empty();
-        if (socket != null){
-        try {
-            socket.close();
-        } catch (IOException ignored) {}
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException ignored) {}
         }
-        if (serverSocket != null){
-        try {
-            serverSocket.close();
-        } catch (IOException ignored) {}
-        super.interrupt();
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ignored) {}
+        }
+    }
+
+    public void killGracefully() {
+        routingTable.empty();
+        for (ServerThread connection : connections) {
+            connection.getConnectionManager().writeToStream(new Notification(Notification.ErrorCode.Cease.getValue(), 0, null));
+            connection.shutdown();
         }
     }
 

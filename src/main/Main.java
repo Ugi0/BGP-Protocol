@@ -88,76 +88,53 @@ public class Main {
                             router.printRoutingTable();
                         }
                         break;
-                
+                    case "states":
+                        for (Router router : routers) {
+                            router.printStates();
+                        }
                     default:
                         printDebug("Invalid argument. Type \"help\" for the list of commands.");
-                        break;
                 }
                 break;
             
             case "shutdown":
                 if (stringParts.length == 1){
                     System.out.println("Missing an argument. Type \"help\" for the list of commands.");
-                    break;
                 }
                 if (stringParts.length == 2){
-                try{
-                    int routerNumber = Integer.parseInt(stringParts[1]);
-                    ArrayList<Integer> routerNumbers = new ArrayList<>();
-                    for (Router router : routers){
-                        routerNumbers.add(router.ownAS);
-                    }
-                    if (routerNumbers.contains(routerNumber)){
-                        int index= routerNumbers.indexOf(routerNumber);
-                        Router router = routers.get(index);
-                        router.kill();   
-                        break;        
-                    }
-                }
-                catch (NumberFormatException e){
-                    printDebug("Invalid argument. Type \"help\" for the list of commands.");
-                }
-                break;
-                }
-
-                if (stringParts.length==3){
-                switch (stringParts[1]) {
-                    // TODO: this is just copy paste of the above, needs to be modified and the notification added.
-                    case "gracefully":
-                    try{
-                        int routerNumber = Integer.parseInt(stringParts[2]);
-                        ArrayList<Integer> routerNumbers = new ArrayList<>();
-                        for (Router router : routers){
-                            routerNumbers.add(router.ownAS);
-                        }
-                        if (routerNumbers.contains(routerNumber)){
-                            int index= routerNumbers.indexOf(routerNumber);
-                            Router router = routers.get(index);
-                            router.kill(); 
-                            break;          
-                        }
+                    try {
+                        int routerNumber = Integer.parseInt(stringParts[1]);
+                        routers.stream().filter(e -> e.ownAS == routerNumber).forEach(e -> e.kill());
                     }
                     catch (NumberFormatException e){
                         printDebug("Invalid argument. Type \"help\" for the list of commands.");
                     }
-                    break;
                 }
-                break;
-                }
-                break;
 
+                if (stringParts.length==3){
+                    switch (stringParts[1]) {
+                        case "gracefully":
+                            try {
+                                int routerNumber = Integer.parseInt(stringParts[2]);
+                                routers.stream().filter(e -> e.ownAS == routerNumber).forEach(e -> e.killGracefully());
+                            }
+                            catch (NumberFormatException e) {
+                                printDebug("Invalid argument. Type \"help\" for the list of commands.");
+                            }
+                    }
+                }
+                break;
 
             case "help":
-                if (stringParts.length==1){
+                if (stringParts.length==1) {
                     System.out.println("Available commands:\n");
                     System.out.printf("%-30s %s%n","get routing","- Prints routing tables.");
                     System.out.printf("%-30s %s%n","shutdown (number)","- kill router without notification.");
                     System.out.printf("%-30s %s%n","shutdown gracefully (number)","- kill router with notification.\n");
-                    break;
-                }else{
+                } else {
                     System.out.println("Invalid argument. Type \"help\" for the list of commands");
-                    break;
                 }
+                break;
 
             case "send":
                 String message = stringParts[1];
@@ -188,7 +165,6 @@ public class Main {
                 printDebug("Invalid command. Type \"help\" for the list of commands");
                 break;
         }
-        //TODO
     }
 
     private static void parseConfig() {

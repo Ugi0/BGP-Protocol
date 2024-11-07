@@ -4,6 +4,7 @@ import static main.Main.printDebug;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.SocketException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
@@ -57,11 +58,16 @@ public class ConnectionManager implements Runnable {
         if (parent.lastKeepAliveMessageTime() + parent.keepAliveTimeout() < TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis())) {
             printDebug("Timed out");
             kill();
+            parent.informDisconnect();
         }
         try {
             stream.write(keepaliveMessage);
             stream.flush();
             printDebug(String.format("Wrote byte %s to the input stream", keepaliveMessage));
+        } catch (SocketException e) {
+            printDebug("Socket has been closed");
+            kill();
+            parent.informDisconnect();
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
@@ -79,10 +85,14 @@ public class ConnectionManager implements Runnable {
         try {
             stream.write(message.toBytes());
             stream.flush();
-            if (future != null) {
+            if (future != null && !scheduler.isShutdown()) {
                 future.cancel(true); //Reset keepalive timer
                 future = scheduler.scheduleWithFixedDelay(this, timeout, timeout, TimeUnit.SECONDS);
             }
+        } catch (SocketException e) {
+            printDebug("Socket has been closed");
+            kill();
+            parent.informDisconnect();
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
@@ -90,10 +100,10 @@ public class ConnectionManager implements Runnable {
         }
     }
 
-    public void kill() {
+    public void kill () {
         if (killed) return;
         scheduler.shutdown();
         killed = true;
-        parent.handleConnectionDeath();
+        parent.shutdown();
     }
 }

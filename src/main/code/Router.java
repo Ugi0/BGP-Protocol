@@ -74,14 +74,30 @@ public class Router {
         server.printRoutingTable();
     }
 
+    public void printStates() {
+        System.out.println(String.format("Router %s", ownAS));
+        server.printStates();
+        System.out.println("Client connections:");
+        for (Client client : clients) {
+            System.out.println(client.state);
+        }
+    }
+
     public void removeFromRoutingTable(String ipAddr) {
         server.removeFromRoutingTable(ipAddr);
     }
 
     public void kill() {
-        server.interrupt();
+        server.shutdown();
         for (Client client : clients) {
-            client.interrupt();
+            client.shutdown();
+        }
+    }
+
+    public void killGracefully() {
+        server.killGracefully();
+        for (Client client : clients) {
+            client.killGracefully();
         }
     }
 

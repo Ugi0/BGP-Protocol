@@ -2,6 +2,7 @@ package main.code.threads;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 
 import messages.ControlMessage;
@@ -25,11 +26,13 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
     Server parent;
 
+    public STATE state = STATE.IDLE;
+
     public ServerThread(Socket s, Server parent) {
         this.parent = parent;
         socket = s;
         try {
-            s.setSoTimeout(60000); //milliseconds, timeouts after 1min
+            s.setSoTimeout(0);
         }catch (IOException e){
             printDebug(("server thread timed out"));
         }
@@ -64,17 +67,16 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
                     index += message.getLength();
 
-                    printDebug(String.format("%s client read %s in the stream", parent.AS, message));
-
-                    parent.handleMessage(message, connectionManager);
+                    printDebug(String.format("%s server read %s in the stream", parent.AS, message));
+                    parent.handleMessage(message, this);
                 }
-                lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+                setLastKeepMessageTime();
             }
+        } catch(NullPointerException | SocketException e){
+            printDebug(String.format("Server %s Closed", getName()));
+            //e.printStackTrace();
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
-            e.printStackTrace();
-        } catch(NullPointerException e){
-            printDebug(String.format("Server %s Closed", getName()));
             e.printStackTrace();
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException | SecurityException e) {
             printDebug(String.format("Server %s couldn't parse the message", getName()));
@@ -106,11 +108,6 @@ public class ServerThread extends Thread implements ConnectionContainer {
         }//end finally
     }
 
-    @Override
-    public void interrupt() {
-        connectionManager.kill();
-    }
-
     public ConnectionManager getConnectionManager() {
         return connectionManager;
     }
@@ -125,12 +122,31 @@ public class ServerThread extends Thread implements ConnectionContainer {
     }
 
     @Override
+    public void setLastKeepMessageTime() {
+        lastMessageTime = TimeUnit.MILLISECONDS.toSeconds( System.currentTimeMillis());
+    }
+
+    @Override
     public int keepAliveTimeout() {
         return 60;
     }
 
     @Override
-    public void handleConnectionDeath() {
-        
+    public void shutdown() {
+        printDebug(String.format("Server thread %s is shutting down", parent.AS));
+        connectionManager.kill();
+    }
+
+    @Override
+    public void informDisconnect() {}
+
+    @Override
+    public STATE getConnectionState() {
+        return state;
+    }
+
+    @Override
+    public void setState(STATE state) {
+        this.state = state;
     }
 }
