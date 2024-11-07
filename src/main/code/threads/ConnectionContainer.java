@@ -9,8 +9,9 @@ public interface ConnectionContainer {
     public void informDisconnect();
     public STATE getConnectionState();
     public void setState(STATE state);
+    public String getIdentifier();
 
     public static enum STATE {
-        IDLE, CONNECT, ACTIVE, OPEN_SENT, OPEN_CONFIRM, ESTABLISHED
+        IDLE, CONNECT, ACTIVE, OPEN_SENT, OPEN_CONFIRM, ESTABLISHED, SHUT_DOWN
     }
 }

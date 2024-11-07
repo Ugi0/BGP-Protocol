@@ -37,7 +37,6 @@ public class Server extends Thread {
 
     private byte[] socketAddress;
 
-    Socket socket = null;
     ServerSocket serverSocket = null;
 
     List<ServerThread> connections;
@@ -71,7 +70,7 @@ public class Server extends Thread {
 
         while(true) {
             try {
-                socket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
                 printDebug("connection Established");
     
                 ServerThread st = new ServerThread(socket, this);
@@ -276,24 +275,30 @@ public class Server extends Thread {
     public void shutdown() {
         printDebug(String.format("Server %s is shutting down", AS));
         routingTable.empty();
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException ignored) {}
+        for (ServerThread connection : connections) {
+            connection.shutdown();
         }
         if (serverSocket != null) {
             try {
                 serverSocket.close();
             } catch (IOException ignored) {}
         }
+        interrupt();
     }
 
     public void killGracefully() {
+        printDebug(String.format("Server %s is shutting down gracefully", AS));
         routingTable.empty();
         for (ServerThread connection : connections) {
             connection.getConnectionManager().writeToStream(new Notification(Notification.ErrorCode.Cease.getValue(), 0, null));
             connection.shutdown();
         }
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ignored) {}
+        }
+        interrupt();
     }
 
 }

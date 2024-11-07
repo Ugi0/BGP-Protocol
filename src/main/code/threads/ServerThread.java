@@ -74,7 +74,6 @@ public class ServerThread extends Thread implements ConnectionContainer {
             }
         } catch(NullPointerException | SocketException e){
             printDebug(String.format("Server %s Closed", getName()));
-            //e.printStackTrace();
         } catch (IOException e) {
             printDebug(String.format("IO Error/ Server %s terminated abruptly", getName()));
             e.printStackTrace();
@@ -133,8 +132,10 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
     @Override
     public void shutdown() {
-        printDebug(String.format("Server thread %s is shutting down", parent.AS));
+        printDebug(String.format("%s is shutting down", getIdentifier()));
         connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
     }
 
     @Override
@@ -148,5 +149,10 @@ public class ServerThread extends Thread implements ConnectionContainer {
     @Override
     public void setState(STATE state) {
         this.state = state;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return String.format("Server thread %s", parent.AS);
     }
 }

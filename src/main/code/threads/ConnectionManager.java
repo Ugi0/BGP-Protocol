@@ -11,13 +11,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import messages.ControlMessage;
+import messages.Keepalive;
 import messages.Message;
 
 public class ConnectionManager implements Runnable {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     ScheduledFuture<?> future;
     private OutputStream stream;
-    private byte[] keepaliveMessage;
+    private Keepalive keepaliveMessage;
     private int timeout;
     private String address;
 
@@ -45,9 +46,9 @@ public class ConnectionManager implements Runnable {
      * @param keepaliveMessage
      * @param timeout
      */
-    public void setKeepAliveMessage(ControlMessage keepaliveMessage, int timeout) {
+    public void setKeepAliveMessage(Keepalive keepaliveMessage, int timeout) {
         this.timeout = timeout;
-        this.keepaliveMessage = keepaliveMessage.toBytes();
+        this.keepaliveMessage = keepaliveMessage;
 
         future = scheduler.scheduleWithFixedDelay(this, timeout, timeout, TimeUnit.SECONDS);
     }
@@ -61,17 +62,20 @@ public class ConnectionManager implements Runnable {
             parent.informDisconnect();
         }
         try {
-            stream.write(keepaliveMessage);
+            stream.write(keepaliveMessage.toBytes());
             stream.flush();
-            printDebug(String.format("Wrote byte %s to the input stream", keepaliveMessage));
+            printDebug(String.format("%s wrote %s to the input stream", parent.getIdentifier(), keepaliveMessage.getClass().getSimpleName()));
         } catch (SocketException e) {
             printDebug("Socket has been closed");
             kill();
+            parent.shutdown();
             parent.informDisconnect();
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
             kill();
+            parent.shutdown();
+            parent.informDisconnect();
         }
     }
 
@@ -81,10 +85,10 @@ public class ConnectionManager implements Runnable {
      */
     public void writeToStream(Message message) {
         if (killed) return;
-        printDebug("Writing to stream: " + message);
         try {
             stream.write(message.toBytes());
             stream.flush();
+            printDebug(String.format("%s wrote %s to the input stream", parent.getIdentifier(), message.getClass().getSimpleName()));
             if (future != null && !scheduler.isShutdown()) {
                 future.cancel(true); //Reset keepalive timer
                 future = scheduler.scheduleWithFixedDelay(this, timeout, timeout, TimeUnit.SECONDS);
@@ -92,11 +96,14 @@ public class ConnectionManager implements Runnable {
         } catch (SocketException e) {
             printDebug("Socket has been closed");
             kill();
+            parent.shutdown();
             parent.informDisconnect();
         } catch (IOException e) {
             printDebug("Socket write Error");
             e.printStackTrace();
             kill();
+            parent.shutdown();
+            parent.informDisconnect();
         }
     }
 
@@ -104,6 +111,5 @@ public class ConnectionManager implements Runnable {
         if (killed) return;
         scheduler.shutdown();
         killed = true;
-        parent.shutdown();
     }
 }

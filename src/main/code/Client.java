@@ -87,7 +87,7 @@ public class Client extends Thread implements ConnectionContainer {
 
                     index += message.getLength();
 
-                    printDebug(String.format("%s client read %s in the stream", ownAS, message));
+                    printDebug(String.format("%s read %s in the stream", getIdentifier(), message.getClass().getSimpleName()));
 
                     handleMessage(message);
                 }
@@ -165,10 +165,16 @@ public class Client extends Thread implements ConnectionContainer {
         return 60;
     }
 
+    public String getIdentifier() {
+        return String.format("Client %s connected to %s", ownAS, ipAdd.split("\\.")[2]);
+    }
+
     @Override
     public void shutdown() {
-        printDebug(String.format("Client %s is shutting down", ownAS));
+        printDebug(String.format("%s is shutting down", getIdentifier()));
         connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
     }
 
     @Override
@@ -177,8 +183,11 @@ public class Client extends Thread implements ConnectionContainer {
     }
 
     public void killGracefully() {
+        printDebug(String.format("%s is shutting down gracefully", getIdentifier()));
         connectionManager.writeToStream(new Notification(Notification.ErrorCode.Cease.getValue(), 0, null));
         connectionManager.kill();
+        state = STATE.SHUT_DOWN;
+        interrupt();
     }
 
     @Override
