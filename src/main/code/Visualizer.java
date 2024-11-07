@@ -1,12 +1,13 @@
 package main.code;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 public class Visualizer {
 
-    public Visualizer(HashMap<Integer, Integer[]> connections){
+    public Visualizer(HashMap<Integer, List<Integer>> connections){
         int totalColumns = Integer.max(100, connections.size()*14);
         int totalRows = Integer.max(20, connections.size()*4);
         char[][] intro;
@@ -18,14 +19,14 @@ public class Visualizer {
     }
 
     //logic for mapping router boxes to matrix and drawing lines between them, lines cannot cross boxes, but can cross other lines
-    private void nodeMap(HashMap<Integer, Integer[]> connections, int totalColumns, int totalRows){
+    private void nodeMap(HashMap<Integer, List<Integer>> connections, int totalColumns, int totalRows){
         
         char[][][] boxes = new char[connections.size()][][]; //for storing all the boxes
         char[][] completeMatrix = new char[totalRows][totalColumns]; //The final matrix to be printed
 
         //creating boxes of all routers in .config
         int index = 0;
-        for (Map.Entry<Integer, Integer[]> entry : connections.entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> entry : connections.entrySet()) {
             boxes[index] = asNode(entry.getKey());
             index++;
         }

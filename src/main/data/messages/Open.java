@@ -38,6 +38,7 @@ public class Open extends ControlMessage {
     private int holdTime;
     private int identifier;
     private int OptParamLen;
+    @SuppressWarnings("unused")
     private int OptParams;
 
     public Open(byte[] message) {
