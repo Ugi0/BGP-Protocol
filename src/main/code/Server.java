@@ -197,7 +197,9 @@ public class Server extends Thread {
      */
     private void handleRoutingTableChange(Update message) {
         for (RouteInformation route : message.getWithdrawnRoutes()) {
-            List<Route> removedRoutes = routingTable.removeRoute(route.getPrefixes().get(0));
+            List<Integer> asPath = route.getPrefixes();
+            asPath.add(Integer.valueOf(AS));
+            List<Route> removedRoutes = routingTable.removeRoute(asPath);
 
             List<RouteInformation> removedRouteInformations = new ArrayList<>();
             for (Route r : removedRoutes) {
@@ -238,7 +240,7 @@ public class Server extends Thread {
 
     public void removeFromRoutingTable(String ipAddr) {
         Integer removedAS = Integer.valueOf(routingTable.getAS(ipAddr));
-        List<Route> removedRoutes = routingTable.removeRoute(removedAS);
+        List<Route> removedRoutes = routingTable.removeAS(removedAS);
 
         List<RouteInformation> removedRouteInformations = new ArrayList<>();
         for (Route r : removedRoutes) {

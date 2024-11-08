@@ -22,16 +22,6 @@ public class RoutingInformationBase{
 		LocRIB = Collections.synchronizedList(new ArrayList<Route>());
 		AdjRIBsOut = Collections.synchronizedList(new ArrayList<Route>());
 		routingTable = new RoutingTable();
-		//Adds the route to the router itself since it is the only one known before connecting
-		//Does the router need to know how to route to itself?
-		
-		//ArrayList<Integer> defaultPath = new ArrayList<Integer>();
-		//defaultPath.add(ownASN);
-		//Route defaultRoute = new Route(ownAddress, defaultPath, ownAddress);
-		//AdjRIBsIn.add(defaultRoute);
-		//LocRIB.add(defaultRoute);
-		//AdjRIBsOut.add(defaultRoute);
-		//routingTable.addRoute(defaultRoute);
 	}
 
 	public List<Route> getAdvertisedRoutes() {
@@ -90,20 +80,30 @@ public class RoutingInformationBase{
 		}
 		return tableChanged;
 	}
-	
-	public List<Route> removeRoute(Integer AS) {
-		ArrayList<Route> ans = new ArrayList<>();
 
-		removeFromList(AS, LocRIB, ans);
-		removeFromList(AS, AdjRIBsIn, null);
-		removeFromList(AS, AdjRIBsOut, null);
+	private void recreateLists() {
+		LocRIB = Collections.synchronizedList(new ArrayList<Route>());
+		AdjRIBsOut = Collections.synchronizedList(new ArrayList<Route>());
+		routingTable = new RoutingTable();
 
-		for (Route r : ans) {
-			routingTable.removeRoute(r);
+		synchronized(AdjRIBsIn) {
+			for (Route r : AdjRIBsIn) {
+				filter(r);
+			}
 		}
+	}
 
-		//TODO if there is another route to AS in AdjRIBOut, the new best routes should be set to LocRIB
-
+	public List<Route> removeAS(Integer AS) {
+		ArrayList<Route> ans = new ArrayList<>();
+		removeFromList(AS, AdjRIBsIn, ans);
+		recreateLists();
+		return ans;
+	}
+	
+	public List<Route> removeRoute(List<Integer> AsPath) {
+		ArrayList<Route> ans = new ArrayList<>();
+		removeFromList(AsPath, AdjRIBsIn, ans);
+		recreateLists();
 		return ans;
 	} 
 
@@ -113,6 +113,18 @@ public class RoutingInformationBase{
 			Route item = iter.next();
 			if (item == null) continue;
 			if (item.AS_PATH.contains(AS)) {
+				iter.remove();
+				if (resultList != null) resultList.add(item);
+			}
+		}
+	}
+
+	private void removeFromList(List<Integer> AsPath, List<Route> searchList, List<Route> resultList) {
+		Iterator<Route> iter = searchList.iterator();
+		while (iter.hasNext()) {
+			Route item = iter.next();
+			if (item == null) continue;
+			if (item.AS_PATH.equals(AsPath)) {
 				iter.remove();
 				if (resultList != null) resultList.add(item);
 			}
