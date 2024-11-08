@@ -7,16 +7,27 @@ import java.util.Random;
 
 public class Visualizer {
 
+    private char[][] intro;
+    private char[][] mappingVisuals;
+
     public Visualizer(HashMap<Integer, List<Integer>> connections){
         int totalColumns = Integer.max(100, connections.size()*14);
         int totalRows = Integer.max(20, connections.size()*4);
-        char[][] intro;
+        
 
         intro = bgpSimulation(totalColumns);
 
-        printMatrix(intro);
         nodeMap(connections, totalColumns, totalRows);
     }
+
+    // Prints BGP SIMULATION in big letters
+    public void printIntro(){
+        printMatrix(intro);
+    };
+
+    public void printMap(){
+        printMatrix(mappingVisuals);
+    };
 
     //logic for mapping router boxes to matrix and drawing lines between them, lines cannot cross boxes, but can cross other lines
     private void nodeMap(HashMap<Integer, List<Integer>> connections, int totalColumns, int totalRows){
@@ -103,7 +114,7 @@ public class Visualizer {
             }
         }
         
-        printMatrix(completeMatrix);
+        mappingVisuals=completeMatrix;
     }
 
     //Adds box to matrix

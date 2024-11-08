@@ -13,9 +13,12 @@ import messages.IpPacket;
 public class Main {
     public static boolean debug = true;
     private static List<Router> routers;
+    private static Visualizer visualizer;
     public static void main(String[] args) {
 
         new Config();
+        visualizer = new Visualizer(Config.connections);
+        visualizer.printIntro();
 
         routers = new ArrayList<>();
 
@@ -65,7 +68,7 @@ public class Main {
                     System.out.println("Key: " + key + ", Value: " + String.join(", ", valueArray.toString()));
                 }
 
-                new Visualizer(Config.connections);
+                visualizer.printMap();
                 break;
             case "get":
                 if (stringParts.length == 1) return;
@@ -116,6 +119,7 @@ public class Main {
                 if (stringParts.length==1) {
                     System.out.println("Available commands:\n");
                     System.out.printf("%-30s %s%n","get routing","- Prints routing tables.");
+                    System.out.printf("%-30s %s%n","visualize","- Prints router map");
                     System.out.printf("%-30s %s%n","shutdown (number)","- kill router without notification.");
                     System.out.printf("%-30s %s%n","shutdown gracefully (number)","- kill router with notification.\n");
                 } else {
