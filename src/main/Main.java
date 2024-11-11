@@ -19,6 +19,8 @@ public class Main {
         new Config();
         visualizer = new Visualizer(Config.connections);
         visualizer.printIntro();
+        visualizer.printMap();
+        
 
         routers = new ArrayList<>();
 
@@ -95,6 +97,7 @@ public class Main {
                     try {
                         int routerNumber = Integer.parseInt(stringParts[1]);
                         routers.stream().filter(e -> e.ownAS == routerNumber).forEach(e -> e.kill());
+                        visualizer.shutRouter(routerNumber);
                     }
                     catch (NumberFormatException e){
                         printDebug("Invalid argument. Type \"help\" for the list of commands.");
@@ -107,6 +110,7 @@ public class Main {
                             try {
                                 int routerNumber = Integer.parseInt(stringParts[2]);
                                 routers.stream().filter(e -> e.ownAS == routerNumber).forEach(e -> e.killGracefully());
+                                visualizer.shutRouter(routerNumber);
                             }
                             catch (NumberFormatException e) {
                                 printDebug("Invalid argument. Type \"help\" for the list of commands.");

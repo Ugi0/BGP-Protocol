@@ -9,6 +9,7 @@ public class Visualizer {
 
     private char[][] intro;
     private char[][] mappingVisuals;
+    private int[][] centerOfBox;
 
     public Visualizer(HashMap<Integer, List<Integer>> connections){
         int totalColumns = Integer.max(100, connections.size()*14);
@@ -27,6 +28,24 @@ public class Visualizer {
 
     public void printMap(){
         printMatrix(mappingVisuals);
+    };
+
+    public void shutRouter(int routerNumber){
+        for(int i = 0; i < centerOfBox.length; i++){
+            if (routerNumber == centerOfBox[i][0]){
+                mappingVisuals[centerOfBox[i][1]][centerOfBox[i][2]] = ' ';
+                /*mappingVisuals[centerOfBox[i][1]-1][centerOfBox[i][2]+1] = 'X';
+                mappingVisuals[centerOfBox[i][1]+1][centerOfBox[i][2]-1] = 'X';
+                mappingVisuals[centerOfBox[i][1]+1][centerOfBox[i][2]+1] = 'X';
+                mappingVisuals[centerOfBox[i][1]-1][centerOfBox[i][2]-1] = 'X';*/
+                break;
+            } else if (routerNumber == 10 && centerOfBox[i][0] == 0){
+                mappingVisuals[centerOfBox[i][1]][centerOfBox[i][2]] = ' ';
+                mappingVisuals[centerOfBox[i][1]][centerOfBox[i][2]-1] = ' ';
+                break;
+            }
+            
+        };
     };
 
     //logic for mapping router boxes to matrix and drawing lines between them, lines cannot cross boxes, but can cross other lines
@@ -53,7 +72,7 @@ public class Visualizer {
                 }
             }
 
-            int[][] centerOfBox = new int[connections.size()][3];
+            centerOfBox = new int[connections.size()][3];
 
             // insert boxes into the matrix matrix
             for (int i = 0; i < connections.size(); i++) { 
@@ -70,8 +89,8 @@ public class Visualizer {
                         insertBox(completeMatrix, boxes[i], startRow, startCol);
                         placed = true;
                         centerOfBox[i][0] = boxes[i][1][2] - '0'; // box number and logging the center position of boxes
-                        centerOfBox[i][1] = startRow + 2; 
-                        centerOfBox[i][2] = startCol + 1; 
+                        centerOfBox[i][1] = startRow + 1; 
+                        centerOfBox[i][2] = startCol + 2; 
                     }
                 }
             }
@@ -105,6 +124,23 @@ public class Visualizer {
                     int endY = connectedCoordinates[0];
                     int endX = connectedCoordinates[1];
 
+                    if (startX<endX){
+                        startX++;
+                        endX--;
+                    }
+                    if (startX>endX){
+                        startX--;
+                        endX++;
+                    }
+                    if (startY<endY){
+                        startY++;
+                        endY--;
+                    }
+                    if (startY>endY){
+                        startY--;
+                        endY++;
+                    }
+
 
                     Finished = drawConnection(completeMatrix, startY, startX, endY, endX);
                 }
@@ -113,8 +149,9 @@ public class Visualizer {
                 }
             }
         }
-        
+
         mappingVisuals=completeMatrix;
+
     }
 
     //Adds box to matrix
