@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.ByteArrayOutputStream;
+import config.Config;
 
 import static main.Main.*;
 
@@ -105,7 +106,7 @@ public class Server extends Thread {
             source.getConnectionManager().setKeepAliveMessage(new Keepalive(), message.getHoldTime());
 
             source.getConnectionManager().writeToStream(new Keepalive());
-            source.getConnectionManager().writeToStream(new Open(AS, 20, 0, 0, 0));
+            source.getConnectionManager().writeToStream(new Open(AS, Config.timeout/3, 0, 0, 0));
 
             source.setState(STATE.OPEN_SENT);
 

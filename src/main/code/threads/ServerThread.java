@@ -11,6 +11,7 @@ import messages.Message;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import config.Config;
 
 import main.code.Server;
 
@@ -127,7 +128,7 @@ public class ServerThread extends Thread implements ConnectionContainer {
 
     @Override
     public int keepAliveTimeout() {
-        return 60;
+        return Config.timeout;
     }
 
     @Override

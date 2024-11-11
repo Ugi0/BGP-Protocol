@@ -12,6 +12,7 @@ import java.util.List;
 public class Config {
     public static int routerCount;
     public static HashMap<Integer, List<Integer>> connections = new HashMap<>();
+    public static int timeout;
 
     public Config() {
         parseConfig();
@@ -30,6 +31,11 @@ public class Config {
                 }
                 if (line.startsWith("Routers")) {
                     routerCount = Integer.parseInt(line.split(":")[1].strip());
+                    line = reader.readLine();
+                    continue;
+                }
+                if (line.startsWith("Timeout")) {
+                    timeout = Integer.parseInt(line.split(":")[1].strip());
                     line = reader.readLine();
                     continue;
                 }

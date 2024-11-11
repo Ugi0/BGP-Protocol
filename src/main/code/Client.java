@@ -13,6 +13,7 @@ import messages.Message;
 import messages.Notification;
 import messages.ControlMessage;
 import messages.Open;
+import config.Config;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,7 +67,7 @@ public class Client extends Thread implements ConnectionContainer {
         connectionManager = new ConnectionManager(outputStream, this, ipAdd);
         parent.addToConnections(connectionManager);
 
-        Open openMessage = new Open(ownAS, 20, 0, 0, 0);
+        Open openMessage = new Open(ownAS, Config.timeout/3, 0, 0, 0);
         connectionManager.writeToStream(openMessage);
         state = STATE.OPEN_SENT;
 
@@ -162,7 +163,7 @@ public class Client extends Thread implements ConnectionContainer {
 
     @Override
     public int keepAliveTimeout() {
-        return 60;
+        return Config.timeout;
     }
 
     public String getIdentifier() {

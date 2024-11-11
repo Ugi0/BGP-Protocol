@@ -11,7 +11,7 @@ import main.code.Visualizer;
 import messages.IpPacket;
 
 public class Main {
-    public static boolean debug = true;
+    public static boolean debug = false;
     private static List<Router> routers;
     private static Visualizer visualizer;
     public static void main(String[] args) {

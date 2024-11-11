@@ -120,13 +120,15 @@ public class RoutingInformationBase{
 	}
 
 	private void removeFromList(List<Integer> AsPath, List<Route> searchList, List<Route> resultList) {
-		Iterator<Route> iter = searchList.iterator();
-		while (iter.hasNext()) {
-			Route item = iter.next();
-			if (item == null) continue;
-			if (item.AS_PATH.equals(AsPath)) {
-				iter.remove();
-				if (resultList != null) resultList.add(item);
+		synchronized(searchList) {
+			Iterator<Route> iter = searchList.iterator();
+			while (iter.hasNext()) {
+				Route item = iter.next();
+				if (item == null) continue;
+				if (item.AS_PATH.equals(AsPath)) {
+					iter.remove();
+					if (resultList != null) resultList.add(item);
+				}
 			}
 		}
 	}
