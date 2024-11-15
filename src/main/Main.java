@@ -133,11 +133,18 @@ public class Main {
                 break;
 
             case "send":
-                String message = stringParts[1];
+                int messageLength = stringParts.length - 2;
+                StringBuilder message = new StringBuilder();
+                for (int i = 1; i<messageLength; i++) {
+                    message.append(stringParts[i]);
+                    if (i != messageLength) {
+                        message.append(" ");
+                    }
+                }
                 byte[] source = new byte[4];
                 byte[] destination = new byte[4];
-                String sourceString = stringParts[2];
-                String destinationString = stringParts[3];
+                String sourceString = stringParts[messageLength];
+                String destinationString = stringParts[messageLength+1];
 
                 int index = 0;
                 for (String s : sourceString.split("\\.")) {
@@ -151,7 +158,7 @@ public class Main {
                 for (Router r : routers) {
                     if (r.getRouterAddress().equals(sourceString)) {
                         r.getServer().handleMessage(
-                            new IpPacket(source, destination, message.getBytes()), 
+                            new IpPacket(source, destination, message.toString().getBytes()), 
                             null);
                     }
                 }
