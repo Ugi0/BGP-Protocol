@@ -123,7 +123,7 @@ public class Server extends Thread {
 
             handleRoutingTableChange((Update) received);
         } else if (received instanceof IpPacket) {
-            if (source.getConnectionState() != STATE.ESTABLISHED) return;
+            if (source != null && source.getConnectionState() != STATE.ESTABLISHED) return;
 
             IpPacket message = (IpPacket) received;
 
@@ -142,7 +142,7 @@ public class Server extends Thread {
                 String nextHop = routingTable.getTable().getNextHop(message.getDestination());
 
                 for (ConnectionManager connection : parent.getConnections()) {
-                    if (connection.getAddress().equals(nextHop)) {
+                    if (connection.getAddress() != null && connection.getAddress().equals(nextHop)) {
                         connection.writeToStream(message);
                     }
                 }
