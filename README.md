@@ -6,7 +6,7 @@ USER MANUAL
      - The logic under port connections is (router)-(connection).
    - Each connection should start from the new line of the config file.
    
-2. run main
+2. Run Main
    - Running the Main.java file starts the simulator with the configured topology and builds the routing tables.
    - Setting the debug to true causes the simulator to print more specific information about the BGP messages and what is happening when the connections are formed and the routing tables updated,
      but having these logs on can cause it to be more difficult to use the commands.
