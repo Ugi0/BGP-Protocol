@@ -7,16 +7,19 @@ USER MANUAL
    - Each connection should start from the new line of the config file.
    
    Example:
+   
    ![contents of .config](https://github.com/Ugi0/BGP-Protocol/blob/05dcfcb47cfbf2845063426d65fd8b06472ac36a/config_example.png)
    
-2. Run Main
+3. Run Main
    - Running the Main.java file starts the simulator with the configured topology and builds the routing tables.
    - Setting the debug to true causes the simulator to print more specific information about the BGP messages and what is happening when the connections are formed and the routing tables updated,
      but having these logs on can cause it to be more difficult to use the commands.
+  
+     Debugging option in the beginning of Main class:
      
-      ![Debugging option in the beginning of Main class](https://github.com/Ugi0/BGP-Protocol/blob/05dcfcb47cfbf2845063426d65fd8b06472ac36a/debug_option.png)
+     ![Debugging option](https://github.com/Ugi0/BGP-Protocol/blob/05dcfcb47cfbf2845063426d65fd8b06472ac36a/debug_option.png)
 
-3. There are six commands available when the program is running: 
+4. There are six commands available when the program is running: 
 
       help: this prints a list of all the other commands. 
 
