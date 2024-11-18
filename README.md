@@ -1,7 +1,7 @@
 USER MANUAL
 
 1. Change .config file
-   - First thing to do in the .config file is to set how many routers you want to start and how fast you want the routers to timeout (in seconds).
+   - First thing to do in the .config file is to set how many routers you want to start and how fast you want the routers to timeout (in seconds). MAX amount of routers is 10
    - Decide which router connects to which router.
      - The logic under port connections is (router)-(connected router).
    - Each connection should start from the new line of the config file.
