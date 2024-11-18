@@ -21,14 +21,14 @@ USER MANUAL
 
 4. There are six commands available when the program is running: 
 
-      help: this prints a list of all the other commands. 
+      `help`: this prints a list of all the other commands. 
 
-      get routing: this prints routing tables for all routers. 
+      `get routing`: this prints routing tables for all routers. 
 
-      shutdown (number): this simulates the router (number) crashing. 
+      `shutdown (number)`: this simulates the router (number) crashing. 
 
-      shutdown gracefully (number): this is controlled shutdown of a router. The router notifies neighbours before shutting down.
+      `shutdown gracefully (number)`: this is controlled shutdown of a router. The router notifies neighbours before shutting down.
 
-      visualize: prints a visualization of the topology. 
+      `visualize`: prints a visualization of the topology. 
 
-      send (message) (source) (destination): allows you to manually send IP packets from a router to another router. 
+      `send (message) (source) (destination)`: allows you to manually send IP packets from a router to another router. 
