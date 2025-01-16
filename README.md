@@ -1,4 +1,8 @@
-USER MANUAL
+# BGP Protocol
+
+This is a project for course DTEK8060 Protocol Processing and Security, which demostrates the function of BGP routing protocol.
+
+### USER MANUAL
 
 1. Check that you have Java installed on your machine
 
